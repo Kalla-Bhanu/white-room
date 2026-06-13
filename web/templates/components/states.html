@@ -1,0 +1,25 @@
+{% macro onboarding_state_card(state, selected=False) -%}
+<article class="state-card {% if selected %}is-selected{% endif %}">
+  <div class="state-card-head">
+    <div class="state-card-copy">
+      <div class="state-card-kicker">{{ state.key.replace('_', ' ') }}</div>
+      <div class="state-card-title">{{ state.title }}</div>
+    </div>
+    <span class="status-chip {{ state.badge_class }}">{{ state.status }}</span>
+  </div>
+  <div class="state-card-body">{{ state.guidance }}</div>
+  <div class="chip-row">
+    <span class="route-chip">{{ state.key.replace('_', ' ') }}</span>
+    <span class="thread-chip">{{ state.primary_label }}</span>
+    {% if state.secondary_label %}
+    <span class="path-chip">{{ state.secondary_label }}</span>
+    {% endif %}
+  </div>
+  <div class="chip-row">
+    <a class="badge accent-2" href="{{ state.primary_href }}">{{ state.primary_label }}</a>
+    {% if state.secondary_label and state.secondary_href %}
+    <a class="badge accent-4" href="{{ state.secondary_href }}">{{ state.secondary_label }}</a>
+    {% endif %}
+  </div>
+</article>
+{%- endmacro %}

@@ -1,0 +1,213 @@
+<div class="context-stack">
+  {% if manual_notice or manual_error or manual_export_result or manual_import_result or codex_notice or codex_error or codex_export_result or codex_import_result %}
+  <article class="feed-item context-card" id="context-card-memory">
+    <div class="feed-head">
+      <div class="feed-title">Lane activity</div>
+      <span class="badge accent-3">recent</span>
+    </div>
+    {% if manual_error %}
+    <div class="error">{{ manual_error }}</div>
+    {% elif manual_import_result %}
+    <div class="created">manual Claude reply imported into {{ manual_import_result.target }} and saved handoff {{ manual_import_result.handoff_path }}</div>
+    {% elif manual_export_result %}
+    <div class="notice">manual Claude export written to {{ manual_export_result.path }} (estimated tokens {{ manual_export_result.token_estimate }})</div>
+    {% elif codex_error %}
+    <div class="error">{{ codex_error }}</div>
+    {% elif codex_import_result %}
+    <div class="created">Codex reply imported into {{ codex_import_result.target }} and saved handoff {{ codex_import_result.handoff_path }}</div>
+    {% elif codex_export_result %}
+    <div class="notice">Codex packet written to {{ codex_export_result.path }} (estimated tokens {{ codex_export_result.token_estimate }})</div>
+    {% elif manual_notice %}
+    <div class="notice">{{ manual_notice }}</div>
+    {% elif codex_notice %}
+    <div class="notice">{{ codex_notice }}</div>
+    {% endif %}
+  </article>
+  {% endif %}
+
+  <article class="feed-item context-card" id="context-card-conversation">
+    <div class="feed-head">
+      <div class="feed-title">Project memory</div>
+      <span class="status-chip ok">local only</span>
+    </div>
+    <div class="feed-body">{{ project.one_line_purpose }}</div>
+    <div class="chip-row">
+      <span class="route-chip">{{ project.slug }}</span>
+      <span class="thread-chip">{{ project.status }}</span>
+      <span class="path-chip">{{ project.path }}</span>
+    </div>
+  </article>
+
+  <article class="feed-item context-card" id="context-card-task">
+    <div class="feed-head">
+      <div class="feed-title">Conversation lane</div>
+      <span class="status-chip warn">{{ conversation_count }} threads</span>
+    </div>
+    <div class="feed-body">
+      Selected thread #{{ selected_conversation.id }} &middot; {{ selected_conversation.title }}
+    </div>
+    <div class="chip-row">
+      <span class="route-chip">{{ latest_session.lane or "deterministic" }}</span>
+      <span class="thread-chip">
+        session {% if latest_session.id %}{{ latest_session.id }}{% else %}n/a{% endif %}
+      </span>
+      <span class="path-chip">{{ message_count }} messages</span>
+    </div>
+  </article>
+
+  {% if task_context %}
+  <article class="feed-item context-card">
+    <div class="feed-head">
+      <div class="feed-title">Task context</div>
+      <span class="badge accent-4">attached</span>
+    </div>
+    <div class="feed-body">
+      Task #{{ task_context.task.id }} &middot; {{ task_context.task.title }}
+    </div>
+    <div class="chip-row">
+      <span class="route-chip">{{ task_context.task.size_class }}</span>
+      <span class="thread-chip">{{ task_context.task.preferred_tier }}</span>
+      <span class="path-chip">packet {{ task_context.packet.packet_id if task_context.packet else 'n/a' }}</span>
+    </div>
+    <div class="feed-body">
+      {% if task_context.packet %}
+      Packet #{{ task_context.packet.packet_id }} generated at {{ task_context.packet.generated_at }}
+      {% else %}
+      No generated packet was found for this task yet.
+      {% endif %}
+    </div>
+    <div class="feed-body">
+      {% if task_context.handoff %}
+      Latest handoff: {{ task_context.handoff.summary }}
+      {% else %}
+      No handoff recorded yet for this task context.
+      {% endif %}
+    </div>
+    <div class="chip-row">
+      {% for brain_file in task_context.attached_brain_files %}
+      <span class="path-chip">{{ brain_file }}</span>
+      {% endfor %}
+    </div>
+  </article>
+  {% endif %}
+
+  {% if chat_task_result %}
+  <article class="feed-item context-card">
+    <div class="feed-head">
+      <div class="feed-title">Task packet</div>
+      <span class="badge accent-2">created</span>
+    </div>
+    <div class="feed-body">
+      Task #{{ chat_task_result.task_id }} was promoted from turn {{ chat_task_result.source_message_id }}.
+    </div>
+    <div class="chip-row">
+      <span class="route-chip">{{ chat_task_result.size_class }}</span>
+      <span class="thread-chip">{{ chat_task_result.preferred_route }}</span>
+      <span class="path-chip">packet {{ chat_task_result.packet_id }}</span>
+    </div>
+    <div class="chip-row">
+      <a class="badge accent-4" href="/board/{{ project.slug }}?created_task={{ chat_task_result.task_id }}&created_packet={{ chat_task_result.packet_id }}">Open board</a>
+    </div>
+  </article>
+  {% endif %}
+
+  <article class="feed-item context-card">
+    <div class="feed-head">
+      <div class="feed-title">Turn to task</div>
+      <span class="badge accent-2">create</span>
+    </div>
+    {% if chat_task_error %}
+    <div class="error">{{ chat_task_error }}</div>
+    {% else %}
+    <div class="feed-body">Promote the latest chat turn into a task packet and surface it on the board.</div>
+    {% endif %}
+    <form method="post" action="/chat/{{ selected_conversation.id }}/to-task">
+      <button type="submit">Create task from latest turn</button>
+    </form>
+  </article>
+
+  <div class="status-frame" id="context-card-status">
+    <div class="status-caption">Current status</div>
+    <div class="status-body">{{ current_status }}</div>
+  </div>
+
+  <article class="feed-item context-card" id="context-card-route">
+    <div class="feed-head">
+      <div class="feed-title">Route decision</div>
+      <span class="badge accent-4">latest</span>
+    </div>
+    {% if latest_route_decision %}
+    {% set display_cost = latest_route_decision.est_cost_usd if latest_route_decision.est_cost_usd is not none else (0.0 if latest_route_decision.chosen_lane in ['manual_claude', 'codex_lb', 'ollama_local', 'lmstudio_local'] else none) %}
+    <div class="route-decision-card">
+      <div class="route-decision-hero">
+        <div>
+          <div class="route-decision-label">Chosen lane</div>
+          <div class="route-decision-lane">{{ latest_route_decision.chosen_lane }}</div>
+        </div>
+        <div class="route-decision-badges">
+          <span class="route-chip">{{ latest_route_decision.mode }}</span>
+          <span class="thread-chip">{{ latest_route_decision.status }}</span>
+          <span class="path-chip">est {% if display_cost is not none %}${{ "%.2f"|format(display_cost) }}{% else %}n/a{% endif %}</span>
+        </div>
+      </div>
+      <div class="route-decision-copy">{{ latest_route_decision.explanation }}</div>
+      <div class="route-decision-meta">
+        <span class="route-chip">{{ latest_route_decision.risk }}/{{ latest_route_decision.size }}</span>
+        <span class="thread-chip">{{ latest_route_decision.candidates|length }} candidates</span>
+        <span class="path-chip">{{ latest_route_decision.source }}</span>
+        {% if latest_route_decision.requires_approval %}
+        <span class="badge accent-3">approval required</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="fallback-stack">
+      <div class="fallback-stack-head">
+        <span class="panel-kicker">Fallbacks</span>
+        <span class="badge accent-2">ranked</span>
+      </div>
+      <div class="fallback-list">
+        {% for candidate in latest_route_decision.candidates %}
+        <div class="fallback-row{% if candidate.selected %} selected{% endif %}">
+          <div class="fallback-main">
+            <div class="fallback-lane">{{ candidate.endpoint_class }}</div>
+            <div class="fallback-reason">{{ candidate.reason or "fallback candidate" }}</div>
+          </div>
+          <div class="fallback-state">
+            {% if candidate.selected %}
+            <span class="badge accent-5">selected</span>
+            {% elif candidate.reject_reason %}
+            <span class="path-chip">{{ candidate.reject_reason }}</span>
+            {% else %}
+            <span class="path-chip">fallback</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="route-decision-card empty">
+      <div class="route-decision-label">Route transparency</div>
+      <div class="route-decision-copy">No routed message yet. The route rail stays in preview mode until a turn is routed, and the fallback detail will surface here when available.</div>
+      <div class="route-decision-meta">
+        <span class="route-chip">route preview</span>
+        <span class="thread-chip">manual lanes gated</span>
+      </div>
+    </div>
+    {% endif %}
+  </article>
+
+  <article class="feed-item context-card" id="context-card-links">
+    <div class="feed-head">
+      <div class="feed-title">Quick links</div>
+      <span class="badge accent-5">{{ agent_threads|length }} agents</span>
+    </div>
+    <div class="chip-row">
+      <a class="badge accent-2" href="/board/{{ project.slug }}">Board</a>
+      <a class="badge accent-3" href="/routes/{{ project.slug }}">Routes</a>
+      <a class="badge accent-4" href="/project/{{ project.slug }}">Brain</a>
+      <a class="badge accent-5" href="/endpoints">Endpoints</a>
+    </div>
+  </article>
+</div>
+

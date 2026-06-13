@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Agents - {{ project.slug }}{% endblock %}
+
+{% block content %}
+<style>
+  .agents-layout {
+    align-items: start;
+  }
+
+  .agent-command-shell {
+    display: grid;
+    gap: 14px;
+  }
+
+  .agent-hero .command-input {
+    min-height: 148px;
+  }
+
+  .agent-step-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .agent-step-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .agent-approval {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .agent-approval input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-2);
+  }
+
+  .agent-rail {
+    display: grid;
+    gap: 12px;
+  }
+
+  .agent-thread-grid {
+    margin-top: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .agent-step-row {
+      grid-template-columns: 1fr;
+    }
+
+    .agent-step-row button {
+      width: 100%;
+    }
+  }
+</style>
+
+{% if notice %}
+<div class="notice">{{ notice }}</div>
+{% endif %}
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<section class="metric-grid" aria-label="Agent thread summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Threads</div>
+    <div class="metric-value">{{ thread_count }}</div>
+    <div class="metric-note">Live agent rows in SQLite.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Active</div>
+    <div class="metric-value">{{ active_count }}</div>
+    <div class="metric-note">Threads with an active task.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Idle</div>
+    <div class="metric-value">{{ idle_count }}</div>
+    <div class="metric-note">Threads waiting for a turn.</div>
+  </div>
+  <div class="metric-card accent-3">
+    <div class="metric-label">Blocked</div>
+    <div class="metric-value">{{ blocked_count }}</div>
+    <div class="metric-note">Threads requiring attention.</div>
+  </div>
+</section>
+
+<div class="workspace-grid board agents-layout" style="margin-top: 16px;">
+  <section class="panel hero-panel agent-hero">
+    <div class="panel-head">
+      <h2 class="panel-title">Agent step console</h2>
+      <span class="badge accent-2">POST /agents/{{ project.slug }}/step</span>
+    </div>
+    <div class="panel-body">
+      <div class="agent-command-shell">
+        <div class="command-input">
+          <div class="label">Human-approved orchestration</div>
+          <div class="prompt">
+            Advance exactly one task, update the owning thread row, and log the handoff. The board stays honest about
+            the next open task and never loops without explicit approval.
+          </div>
+          <div class="placeholder" style="margin-top: 10px;">
+            Next open task:
+            {% if next_task.id %}
+            #{{ next_task.id }} {{ next_task.title }} · {{ next_task.status }} · {{ next_task.preferred_tier }}
+            {% else %}
+            none available
+            {% endif %}
+          </div>
+        </div>
+
+        <form class="agent-step-form" method="post" action="/agents/{{ project.slug }}/step">
+          <div class="agent-step-row">
+            <div class="field">
+              <label for="approved">Approval</label>
+              <div class="agent-approval">
+                <input id="approved" name="approved" type="checkbox" value="true" />
+                <label for="approved">Approve the next orchestrated step</label>
+              </div>
+            </div>
+            <button type="submit">Advance one step</button>
+          </div>
+          <div class="chip-row">
+            <span class="route-chip">{{ project.slug }}</span>
+            <span class="thread-chip">{{ thread_count }} threads</span>
+            <span class="path-chip">{{ active_count }} active</span>
+            <span class="path-chip">{{ blocked_count }} blocked</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Thread policy</h2>
+      <span class="badge accent-4">single writer</span>
+    </div>
+    <div class="panel-body">
+      <div class="status-frame">
+        <div class="status-caption">Current status</div>
+        <div class="status-body">{{ current_status }}</div>
+      </div>
+      <div class="chip-row" style="margin-top: 12px;">
+        <span class="route-chip">{{ project.slug }}</span>
+        <span class="thread-chip">approved step only</span>
+        <span class="path-chip">no loops</span>
+      </div>
+      <div class="presence-list" style="margin-top: 12px;">
+        <div class="presence-row">
+          <span class="presence-dot ok"></span>
+          <div class="presence-copy">
+            <div class="presence-name">Orchestrator-led</div>
+            <div class="presence-state">One approved step at a time with handoff logging.</div>
+          </div>
+        </div>
+        <div class="presence-row">
+          <span class="presence-dot warn"></span>
+          <div class="presence-copy">
+            <div class="presence-name">Single writer</div>
+            <div class="presence-state">Each thread owns its files and state updates.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<section class="panel agent-thread-grid" style="margin-top: 16px;">
+  <div class="panel-head">
+    <h2 class="panel-title">Agent Threads</h2>
+    <span class="badge accent-5">{{ threads|length }} rows</span>
+  </div>
+  <div class="panel-body">
+    <div class="thread-grid">
+      {% for thread in threads %}
+      <article class="thread-card state-{{ thread.state }}">
+        <div class="thread-card-head">
+          <div>
+            <div class="thread-card-kicker">{{ thread.thread_name }}</div>
+            <div class="thread-card-title">{{ thread.label }}</div>
+          </div>
+          <span class="status-chip {% if thread.state == 'active' %}ok{% elif thread.state == 'blocked' %}bad{% elif thread.state == 'complete' %}ok{% else %}warn{% endif %}">
+            {{ thread.state_label }}
+          </span>
+        </div>
+
+        <div class="thread-card-copy">{{ thread.purpose }}</div>
+
+        <div class="chip-row">
+          <span class="route-chip">{{ thread.lane_preference }}</span>
+          <span class="thread-chip">{{ thread.task_count }} tasks</span>
+          <span class="path-chip">{{ thread.ui }}</span>
+        </div>
+
+        <div class="thread-card-foot">
+          <div class="presence-row">
+            <span class="presence-dot {% if thread.state == 'blocked' %}bad{% elif thread.state == 'active' %}ok{% else %}warn{% endif %}"></span>
+            <div class="presence-copy">
+              <div class="presence-name">Allowed files</div>
+              <div class="presence-state">{{ thread.allowed_files_text }}</div>
+            </div>
+          </div>
+          <div class="presence-row">
+            <span class="presence-dot {% if thread.state == 'blocked' %}bad{% elif thread.state == 'active' %}ok{% else %}warn{% endif %}"></span>
+            <div class="presence-copy">
+              <div class="presence-name">Allowed actions</div>
+              <div class="presence-state">{{ thread.allowed_actions_text }}</div>
+            </div>
+          </div>
+          <div class="thread-card-note">Escalates when {{ thread.escalates_when }}.</div>
+          <div class="thread-card-note">Writes handoff: {{ thread.writes_handoff }}. Updated {{ thread.updated_at }}.</div>
+        </div>
+
+        {% if thread.current_task_id %}
+        <div class="chip-row">
+          <span class="path-chip">task #{{ thread.current_task_id }}</span>
+          <span class="path-chip">{{ thread.current_task_status }}</span>
+        </div>
+        <div class="thread-card-copy">{{ thread.current_task_title }}</div>
+        {% else %}
+        <div class="thread-card-note">Idle. No active task is pinned to this thread yet.</div>
+        {% endif %}
+
+        {% if thread.last_handoff_id %}
+        <div class="presence-row">
+          <span class="presence-dot ok"></span>
+          <div class="presence-copy">
+            <div class="presence-name">Last handoff #{{ thread.last_handoff_id }}</div>
+            <div class="presence-state">{{ thread.last_handoff_summary }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

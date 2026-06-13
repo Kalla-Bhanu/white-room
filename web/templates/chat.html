@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Chat - {{ project.slug }}{% endblock %}
+
+{% block content %}
+<style>
+  .chat-layout {
+    align-items: start;
+  }
+
+  .chat-history-panel,
+  .chat-context-panel {
+    min-width: 0;
+  }
+
+  .chat-command-shell {
+    display: grid;
+    gap: 14px;
+  }
+
+  .side-stack {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .chat-hero .command-input {
+    min-height: 126px;
+  }
+
+  .chat-hero .command-input .prompt {
+    max-width: 78ch;
+  }
+
+  .conversation-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .conversation-link {
+    max-width: 100%;
+    text-align: left;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .conversation-link.is-active {
+    border-color: rgba(124, 140, 255, 0.42);
+    box-shadow: 0 0 0 1px rgba(124, 140, 255, 0.22) inset;
+  }
+
+  .chat-status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chat-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .chat-form textarea {
+    min-height: 136px;
+    resize: vertical;
+  }
+
+  .chat-form-row {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: end;
+  }
+
+  .chat-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .chat-stream-banner {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(86, 215, 214, 0.22);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .chat-stream-banner.is-active {
+    border-color: rgba(124, 140, 255, 0.34);
+    background: rgba(124, 140, 255, 0.08);
+    color: var(--text-strong);
+  }
+
+  .context-stack {
+    display: grid;
+    gap: 12px;
+  }
+
+  .message-list {
+    gap: 10px;
+  }
+
+  .message-card {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    padding: 14px 14px 14px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 36%),
+      rgba(255, 255, 255, 0.02);
+  }
+
+  .message-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--accent);
+    opacity: 0.9;
+  }
+
+  .message-card.user::before {
+    background: var(--accent-2);
+  }
+
+  .message-card.assistant::before {
+    background: var(--accent-4);
+  }
+
+  .message-card.system::before {
+    background: var(--accent-3);
+  }
+
+  .message-card.pending {
+    border-color: rgba(124, 140, 255, 0.28);
+    background:
+      linear-gradient(180deg, rgba(124, 140, 255, 0.08), transparent 42%),
+      rgba(255, 255, 255, 0.02);
+  }
+
+  .message-card.error::before {
+    background: var(--bad);
+  }
+
+  .message-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .message-title {
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .message-subtitle {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .message-body {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .message-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .route-selector {
+    display: grid;
+    gap: 6px;
+  }
+
+  .empty-state {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px dashed rgba(124, 140, 255, 0.24);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .empty-title {
+    color: var(--text-strong);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .empty-copy {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .manual-box-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .manual-box-form textarea {
+    min-height: 160px;
+  }
+
+  @media (max-width: 760px) {
+    .chat-form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .chat-form-actions {
+      width: 100%;
+    }
+
+    .chat-form-actions button {
+      width: 100%;
+    }
+  }
+</style>
+
+{% if manual_notice %}
+<div class="notice">{{ manual_notice }}</div>
+{% endif %}
+
+<section class="panel hero-panel chat-hero">
+  <div class="panel-head">
+    <h2 class="panel-title">Local chat workbench</h2>
+    <span class="badge accent-2">chat/{{ project.slug }}</span>
+  </div>
+  <div class="panel-body">
+    <div class="chat-command-shell">
+      <div class="command-input">
+        <div class="label">Local command surface</div>
+        <div class="prompt">
+          Send a turn through the localhost lane. The workbench streams a draft response when a local runner is available and falls back to an unavailable state when both runners are offline.
+        </div>
+        <div class="chat-status-row" style="margin-top: 10px;">
+          <span class="route-chip">{{ project.slug }}</span>
+          <span class="thread-chip">{{ conversation_count }} threads</span>
+          <span class="path-chip">{{ message_count }} messages</span>
+          <span class="path-chip">session {{ latest_session.id or "n/a" }}</span>
+          <span class="status-chip {% if runner_snapshot.reachable %}ok{% else %}bad{% endif %}">
+            {{ runner_snapshot.status }}
+          </span>
+        </div>
+        <form id="chat-send-form" class="chat-form" method="post" action="/chat/{{ selected_conversation.id }}/send" data-chat-form>
+          <div class="field field-wide">
+            <label for="chat-content">Prompt</label>
+            <textarea id="chat-content" name="content" rows="5" placeholder="Ask the local lane to draft, summarize, or revise this project memory."></textarea>
+          </div>
+          <div class="chat-form-row">
+            <div class="field route-selector">
+              <label for="chat-lane">Route selector</label>
+              <select id="chat-lane" name="lane">
+                <option value="auto">Auto local lane</option>
+                <option value="ollama_local">Ollama local</option>
+                <option value="lmstudio_local">LM Studio local</option>
+              </select>
+            </div>
+            <div class="chat-form-actions">
+              <div class="chip-row">
+                <span class="path-chip">{{ latest_session.lane or "deterministic" }}</span>
+                <span class="path-chip">{{ manual_default_target }}</span>
+              </div>
+              <button type="submit">Send local draft</button>
+            </div>
+          </div>
+        </form>
+        <div id="chat-stream-banner" class="chat-stream-banner">
+          <div class="empty-title">Ready</div>
+          <div class="empty-copy">Local turn streaming will appear here. If the runner is unavailable the lane will stay honest about it.</div>
+        </div>
+      </div>
+      <div class="command-actions">
+        <div class="chip-row">
+          {% if runner_snapshot.endpoints %}
+            {% for endpoint in runner_snapshot.endpoints %}
+            <span class="route-chip">
+              {{ endpoint.endpoint_class }}{% if endpoint.reachable %} · up{% else %} · down{% endif %}
+            </span>
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div class="actions" style="margin-top: 0;">
+          <a class="badge accent-2" href="/board/{{ project.slug }}">Open board</a>
+          <a class="badge accent-4" href="/project/{{ project.slug }}">Project brain</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="workspace-grid board chat-layout" style="margin-top: 16px;">
+  <section class="panel chat-history-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Conversation history</h2>
+      <span class="badge accent-5">{{ message_count }} messages</span>
+    </div>
+    <div class="panel-body">
+      {% if messages %}
+      <div id="chat-message-list" class="feed-list compact message-list">
+        {% for message in messages %}
+        <article class="message-card {{ message.role }} {% if message.status == 'error' %}error{% elif message.status == 'draft' %}pending{% endif %}" data-message-id="{{ message.id }}">
+          <div class="message-head">
+            <div>
+              <div class="message-title">{{ message.role|capitalize }}</div>
+              <div class="message-subtitle">
+                session {{ message.session_id }} &middot; {{ message.created_at }}
+              </div>
+            </div>
+            <div class="chip-row">
+              <span class="route-chip">{{ message.route_mode }}</span>
+              <span class="thread-chip">{{ message.endpoint_class or message.status }}</span>
+            </div>
+          </div>
+          <div class="message-body">{{ message.content }}</div>
+          <div class="message-foot">
+            <span class="path-chip">tokens {{ message.token_estimate }}</span>
+            <span class="path-chip">status {{ message.status }}</span>
+            {% if message.model_name %}
+            <span class="path-chip">{{ message.model_name }}</span>
+            {% endif %}
+            {% if message.error_kind %}
+            <span class="path-chip">{{ message.error_kind }}</span>
+            {% endif %}
+            {% if message.attached_task_id %}
+            <span class="path-chip">task {{ message.attached_task_id }}</span>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-title">No messages yet.</div>
+        <div class="empty-copy">
+          This conversation is ready for the first local note. The history will fill here once the workbench begins
+          recording messages.
+        </div>
+        <div class="actions" style="justify-content: flex-start; margin-top: 2px;">
+          <a class="badge accent-2" href="/board/{{ project.slug }}">Open board</a>
+          <a class="badge accent-4" href="/project/{{ project.slug }}">Project brain</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="side-stack">
+    <aside class="panel chat-context-panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Context rail</h2>
+        <span class="badge accent-4">read-only</span>
+      </div>
+      <div class="panel-body">
+        {% include "components/context_rail.html" %}
+      </div>
+    </aside>
+
+    {% include "components/route_panel.html" %}
+
+    {% include "components/manual_box.html" %}
+  </div>
+</div>
+{% endblock %}

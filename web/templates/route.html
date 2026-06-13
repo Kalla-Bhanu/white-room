@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Route - {{ project.slug }}{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<section class="metric-grid" aria-label="Route summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Route tasks</div>
+    <div class="metric-value">{{ route_count }}</div>
+    <div class="metric-note">Available for local routing.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Selected task</div>
+    <div class="metric-value" style="font-size: 15px;">{{ selected_task_id or 'none' }}</div>
+    <div class="metric-note">Current route target.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Handoffs</div>
+    <div class="metric-value">{{ handoffs|length }}</div>
+    <div class="metric-note">Recent transitions on record.</div>
+  </div>
+</section>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Route command surface</h2>
+      <span class="badge accent-2">POST /route/run</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" action="/route/run" class="command-surface">
+        <input type="hidden" name="slug" value="{{ project.slug }}" />
+        <div class="field-grid">
+          <div class="field field-wide">
+            <label for="task_id">Task</label>
+            <select id="task_id" name="task_id">
+              {% for task in tasks %}
+              <option value="{{ task.id }}" {% if task.id == selected_task_id %}selected{% endif %}>
+                #{{ task.id }} {{ task.title }} ({{ task.status }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="command-actions">
+          <div class="chip-row">
+            <span class="route-chip">project: {{ project.slug }}</span>
+            <span class="thread-chip">thread: orchestrator</span>
+            <span class="path-chip">deterministic preview</span>
+          </div>
+          <div class="actions" style="margin-top: 0;">
+            <button type="submit">Run route</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Route state</h2>
+      <span class="badge accent-4">local gate</span>
+    </div>
+    <div class="panel-body">
+      {% if route_result %}
+      <div class="feed-list">
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">Task #{{ route_result.task_id }} {{ route_result.task_title }}</div>
+            <span class="status-chip {% if route_result.mode == 'needs approval' %}warn{% elif route_result.mode == 'auto' %}ok{% else %}warn{% endif %}">
+              {{ route_result.mode }}
+            </span>
+          </div>
+          <div class="feed-body">{{ route_result.rationale }}</div>
+          <div class="chip-row">
+            <span class="route-chip">{{ route_result.endpoint_class }}</span>
+            <span class="thread-chip">{{ route_result.classification.task_type }} / {{ route_result.classification.size }}</span>
+            <span class="path-chip">{{ route_result.classification.risk }}</span>
+          </div>
+          {% if route_result.approval_message %}
+          <div class="feed-meta">{{ route_result.approval_message }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="meta">Run a task to see the selected lane, preview, and approval state.</div>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+
+{% if approval_gate %}
+{% include "components/approval_modal.html" %}
+{% endif %}
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Preview payload</h2>
+      <span class="badge accent-5">core.router.run_route()</span>
+    </div>
+    <div class="panel-body">
+      {% if route_result %}
+      <pre class="preview">{{ route_result.preview | tojson(indent=2) }}</pre>
+      {% else %}
+      <div class="meta">Select a task and run the router to view the dry-run payload.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Recent handoffs</h2>
+      <span class="badge">{{ handoffs|length }} total</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for handoff in handoffs %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">{{ handoff.from_worker }} → {{ handoff.to_worker }}</div>
+            <span class="path-chip mono">{{ handoff.created_at }}</span>
+          </div>
+          <div class="feed-body">{{ handoff.summary }}</div>
+          <div class="chip-row">
+            <span class="thread-chip">{{ handoff.task_id or 'no task' }}</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="feed-item"><div class="feed-body">No handoffs recorded yet.</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

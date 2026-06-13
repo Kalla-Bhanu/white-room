@@ -1,0 +1,15 @@
+.env
+secrets.local.json
+secrets.enc
+data/
+projects/*/artifacts/private/
+__pycache__/
+*.py[cod]
+.venv/
+.deps/
+.pytest_cache/
+*.log
+dist/
+*.sqlite
+*.sqlite3
+*.db

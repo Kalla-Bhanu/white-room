@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% from "components/states.html" import onboarding_state_card %}
+
+{% block title %}WHITE ROOM Onboarding{% endblock %}
+
+{% block content %}
+<style>
+  .onboarding-layout {
+    display: grid;
+    gap: 16px;
+  }
+
+  .onboarding-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .state-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .state-card {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    padding: 14px 14px 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 36%),
+      rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+  }
+
+  .state-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--accent-4);
+  }
+
+  .state-card.is-selected::before {
+    background: linear-gradient(180deg, var(--accent-5), var(--accent-2));
+  }
+
+  .state-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .state-card-copy {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .state-card-kicker {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .state-card-title {
+    color: var(--text-strong);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .state-card-body {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .state-preview {
+    display: grid;
+    gap: 12px;
+  }
+
+  .state-preview .command-input {
+    min-height: 152px;
+  }
+
+  .state-preview-title {
+    display: grid;
+    gap: 8px;
+  }
+
+  .state-preview-title .prompt {
+    font-size: 20px;
+    line-height: 1.25;
+  }
+
+  @media (max-width: 1120px) {
+    .onboarding-grid,
+    .state-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="metric-grid" aria-label="Onboarding summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Projects</div>
+    <div class="metric-value">{{ onboarding.project_count }}</div>
+    <div class="metric-note">{% if onboarding.has_project %}Workspace is indexed and ready.{% else %}No projects indexed yet.{% endif %}</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Local runner</div>
+    <div class="metric-value">{% if onboarding.ollama_reachable %}up{% else %}down{% endif %}</div>
+    <div class="metric-note">{{ onboarding.runner_message }}</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Keys present</div>
+    <div class="metric-value">{{ onboarding.key_labels|length }}</div>
+    <div class="metric-note">Presence-only, never values.</div>
+  </div>
+</section>
+
+<div class="onboarding-grid">
+  <section class="panel hero-panel state-preview">
+    <div class="panel-head">
+      <h2 class="panel-title">Onboarding cockpit</h2>
+      <span class="badge accent-2">previewable states</span>
+    </div>
+    <div class="panel-body">
+      <div class="command-surface">
+        <div class="command-input state-preview-title">
+          <div class="label">Selected state</div>
+          <div class="prompt">{{ onboarding.hero_card.title }}</div>
+          <div class="placeholder">{{ onboarding.hero_card.guidance }}</div>
+        </div>
+        <div class="command-actions">
+          <div class="chip-row">
+            <span class="route-chip">{{ onboarding.selected_state.replace('_', ' ') }}</span>
+            <span class="thread-chip">{{ onboarding.hero_card.status }}</span>
+            <span class="path-chip">{% if onboarding.claude_manual_available %}Claude manual available{% endif %}</span>
+          </div>
+          <div class="chip-row" style="margin-top: 8px;">
+            <a class="badge accent-2" href="/chat/white-room">Open workspace</a>
+            <a class="badge accent-4" href="/projects">Projects</a>
+            <a class="badge accent-5" href="/settings">Settings</a>
+          </div>
+        </div>
+      </div>
+      <div class="feed-list compact" style="margin-top: 16px;">
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">Chat-first by default</div>
+          </div>
+          <div class="feed-body">WHITE ROOM opens in chat first and keeps manual lanes, runner state, and project memory visible around it.</div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">Preview states are honest</div>
+          </div>
+          <div class="feed-body">Use <span class="mono">/onboarding?state=...</span> to inspect a specific empty or onboarding state without changing anything locally.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">State rails</h2>
+      <span class="badge accent-4">{{ onboarding.state_cards|length }} states</span>
+    </div>
+    <div class="panel-body">
+      <div class="stack">
+        {% for state in onboarding.state_cards %}
+          {{ onboarding_state_card(state, selected=state.key == onboarding.selected_state) }}
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

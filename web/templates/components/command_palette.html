@@ -1,0 +1,144 @@
+<section
+  class="command-palette"
+  data-command-palette
+  data-project-slug="{{ project.slug }}"
+  data-conversation-id="{{ selected_conversation.id }}"
+  hidden
+  aria-label="Command palette"
+>
+  <div class="command-palette-backdrop" data-command-palette-close></div>
+  <div class="command-palette-panel" role="dialog" aria-modal="true" aria-labelledby="command-palette-title">
+    {% set project_items = projects if projects is defined and projects else all_projects() %}
+    <div class="command-palette-head">
+      <div>
+        <div id="command-palette-title" class="command-palette-title">Command palette</div>
+        <div class="command-palette-copy">Cmd/Ctrl-K, arrows, Enter, Esc. Quiet local actions only.</div>
+      </div>
+      <button type="button" class="command-palette-close" data-command-palette-close aria-label="Close command palette">Esc</button>
+    </div>
+
+    <label class="command-palette-search">
+      <span class="sr-only">Filter commands</span>
+      <input
+        type="search"
+        data-command-palette-query
+        placeholder="Search commands, routes, projects, or actions"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </label>
+
+    <div class="command-palette-grid">
+      <div class="command-palette-section">
+        <div class="command-palette-section-label">Actions</div>
+        <div class="command-palette-list" data-command-palette-list>
+          <a class="command-palette-item" href="/projects" data-command-item data-command-label="Switch project" data-command-tags="switch project projects index">
+            <span class="command-palette-item-main">
+              <span class="command-palette-item-title">Switch project</span>
+              <span class="command-palette-item-copy">Open the project index and choose a different workspace.</span>
+            </span>
+            <span class="command-palette-item-key">projects</span>
+          </a>
+          <a class="command-palette-item" href="/board/{{ project.slug }}" data-command-item data-command-label="Open task" data-command-tags="open task board packet">
+            <span class="command-palette-item-main">
+              <span class="command-palette-item-title">Open task</span>
+              <span class="command-palette-item-copy">Jump to the project board and the task packet surface.</span>
+            </span>
+            <span class="command-palette-item-key">board</span>
+          </a>
+          <button
+            type="button"
+            class="command-palette-item"
+            data-command-item
+            data-command-kind="create-task"
+            data-command-label="Create task"
+            data-command-tags="create task new packet board"
+          >
+            <span class="command-palette-item-main">
+              <span class="command-palette-item-title">Create task</span>
+              <span class="command-palette-item-copy">Promote the palette query into a new local task packet.</span>
+            </span>
+            <span class="command-palette-item-key">task</span>
+          </button>
+          <form method="post" action="/chat/{{ selected_conversation.id }}/export-manual" class="command-palette-form">
+            <button
+              type="submit"
+              class="command-palette-item"
+              data-command-item
+              data-command-label="Export Claude packet"
+              data-command-tags="export claude packet manual"
+            >
+              <span class="command-palette-item-main">
+                <span class="command-palette-item-title">Export Claude packet</span>
+                <span class="command-palette-item-copy">Write the current conversation into the manual Claude export lane.</span>
+              </span>
+              <span class="command-palette-item-key">claude</span>
+            </button>
+          </form>
+          <form method="post" action="/chat/{{ selected_conversation.id }}/export-codex" class="command-palette-form">
+            <button
+              type="submit"
+              class="command-palette-item"
+              data-command-item
+              data-command-label="Export Codex packet"
+              data-command-tags="export codex packet manual"
+            >
+              <span class="command-palette-item-main">
+                <span class="command-palette-item-title">Export Codex packet</span>
+                <span class="command-palette-item-copy">Write the current conversation into the gated Codex packet flow.</span>
+              </span>
+              <span class="command-palette-item-key">codex</span>
+            </button>
+          </form>
+          <a class="command-palette-item" href="/routes/{{ project.slug }}" data-command-item data-command-label="Open routes" data-command-tags="open routes route decision">
+            <span class="command-palette-item-main">
+              <span class="command-palette-item-title">Open routes</span>
+              <span class="command-palette-item-copy">Inspect the current route decisions and lane explanations.</span>
+            </span>
+            <span class="command-palette-item-key">routes</span>
+          </a>
+          <a class="command-palette-item" href="/settings" data-command-item data-command-label="Open settings" data-command-tags="open settings providers profiles">
+            <span class="command-palette-item-main">
+              <span class="command-palette-item-title">Open settings</span>
+              <span class="command-palette-item-copy">Review provider profiles, keys, and presence-only settings.</span>
+            </span>
+            <span class="command-palette-item-key">settings</span>
+          </a>
+          <a class="command-palette-item" href="/settings" data-command-item data-command-label="Connect provider" data-command-tags="connect provider settings keys">
+            <span class="command-palette-item-main">
+              <span class="command-palette-item-title">Connect provider</span>
+              <span class="command-palette-item-copy">Open the settings page where gated provider lanes are connected.</span>
+            </span>
+            <span class="command-palette-item-key">connect</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="command-palette-section">
+        <div class="command-palette-section-label">Projects</div>
+        <div class="command-palette-projects">
+          {% set palette = ["accent-2", "accent-3", "accent-4", "accent-5", "accent"] %}
+          {% for item in project_items %}
+          <a class="command-palette-project {% if item.slug == project.slug %}is-active{% endif %}" href="/chat/{{ item.slug }}" data-command-item data-command-label="{{ item.name }}" data-command-tags="switch project {{ item.slug }} {{ item.status }}">
+            <span class="project-dot {{ palette[loop.index0 % palette|length] }}"></span>
+            <span class="project-copy">
+              <span class="project-name">{{ item.name }}</span>
+              <span class="project-purpose">{{ item.status }}</span>
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <form class="command-palette-hidden-form" method="post" action="/task/create" data-command-create-form>
+      <input type="hidden" name="slug" value="{{ project.slug }}">
+      <input type="hidden" name="title" value="">
+      <input type="hidden" name="goal" value="">
+      <input type="hidden" name="size_class" value="small">
+      <input type="hidden" name="preferred_route" value="execution">
+      <input type="hidden" name="expected_output" value="Command palette task packet created locally.">
+      <input type="hidden" name="acceptance" value="Command palette task packet exists and is linked to the current project.">
+    </form>
+  </div>
+</section>

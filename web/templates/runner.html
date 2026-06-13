@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Runner{% endblock %}
+
+{% block content %}
+<style>
+  .runner-layout {
+    display: grid;
+    gap: 16px;
+  }
+
+  .runner-hero .command-input {
+    min-height: 126px;
+  }
+
+  .runner-status {
+    display: grid;
+    gap: 12px;
+  }
+
+  .runner-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .runner-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .runner-endpoints {
+    display: grid;
+    gap: 10px;
+  }
+
+  .runner-card {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    padding: 14px 14px 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 36%),
+      rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+  }
+
+  .runner-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--accent);
+  }
+
+  .runner-card.ok::before {
+    background: var(--accent-5);
+  }
+
+  .runner-card.offline::before {
+    background: var(--accent-3);
+  }
+
+  .runner-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .runner-name {
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .runner-copy {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .runner-empty {
+    display: grid;
+    gap: 8px;
+    padding: 18px;
+    border: 1px dashed rgba(124, 140, 255, 0.24);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .runner-empty-title {
+    color: var(--text-strong);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .runner-empty-copy {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 1120px) {
+    .runner-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .runner-badges {
+      width: 100%;
+    }
+
+    .runner-card-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<section class="panel hero-panel runner-hero">
+  <div class="panel-head">
+    <h2 class="panel-title">Runner health</h2>
+    <span class="badge {% if snapshot.reachable %}accent-5{% else %}accent-3{% endif %}">
+      {{ snapshot.status }}
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="command-surface runner-status">
+      <div class="command-input">
+        <div class="label">Local runner status</div>
+        <div class="prompt">
+          The workbench checks localhost-only local model runners and records endpoint health rows. Cloud and premium
+          lanes stay metadata-only here.
+        </div>
+        <div class="placeholder" style="margin-top: 10px;">
+          {{ snapshot.message }} &middot; checked at {{ snapshot.checked_at }}
+        </div>
+      </div>
+      <div class="runner-badges">
+        <span class="badge accent-2">localhost only</span>
+        <span class="badge accent-4">presence-only keys</span>
+        <span class="badge accent-5">{{ snapshot.endpoints|length }} endpoints</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="runner-grid">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Local endpoints</h2>
+      <span class="badge accent-2">health_check()</span>
+    </div>
+    <div class="panel-body">
+      <div class="runner-endpoints">
+        {% for endpoint in snapshot.endpoints %}
+        <article class="runner-card {% if endpoint.reachable %}ok{% else %}offline{% endif %}">
+          <div class="runner-card-head">
+            <div>
+              <div class="runner-name">{{ endpoint.name }}</div>
+              <div class="runner-copy">{{ endpoint.endpoint_class }} &middot; {{ endpoint.base_url }}</div>
+            </div>
+            <span class="status-chip {% if endpoint.reachable %}ok{% else %}bad{% endif %}">
+              {% if endpoint.reachable %}reachable{% else %}offline{% endif %}
+            </span>
+          </div>
+          <div class="chip-row">
+            <span class="route-chip">key {{ 'present' if endpoint.key_present else 'missing' }}</span>
+            <span class="thread-chip">latency {% if endpoint.latency_ms is not none %}{{ endpoint.latency_ms }}ms{% else %}n/a{% endif %}</span>
+            <span class="path-chip">{{ endpoint.last_checked }}</span>
+          </div>
+          <div class="runner-copy">{{ endpoint.detail }}</div>
+        </article>
+        {% else %}
+        <div class="runner-empty">
+          <div class="runner-empty-title">No local endpoints indexed.</div>
+          <div class="runner-empty-copy">
+            Add the local runner records first, then this page will show their status badges here.
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Fallback state</h2>
+      <span class="badge accent-4">graceful offline</span>
+    </div>
+    <div class="panel-body">
+      {% if snapshot.reachable %}
+      <div class="runner-empty" style="border-color: rgba(110, 231, 168, 0.28);">
+        <div class="runner-empty-title">Local runner reachable.</div>
+        <div class="runner-empty-copy">
+          The chat lane can use the live local runner path when later packets wire it in.
+        </div>
+      </div>
+      {% else %}
+      <div class="runner-empty">
+        <div class="runner-empty-title">Offline - start Ollama/LM Studio.</div>
+        <div class="runner-empty-copy">
+          This is expected when no local runner is listening. The app stays usable and the page keeps its dark
+          operational layout.
+        </div>
+      </div>
+      {% endif %}
+      <div class="chip-row" style="margin-top: 12px;">
+        <a class="badge accent-2" href="/chat/white-room">Chat</a>
+        <a class="badge accent-4" href="/board/white-room">Board</a>
+        <a class="badge accent-5" href="/endpoints">Endpoints</a>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

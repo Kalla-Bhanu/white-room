@@ -1,0 +1,171 @@
+<style>
+  .sidebar-actions,
+  .sidebar-inline-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sidebar-actions details {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.015);
+  }
+
+  .sidebar-actions summary {
+    padding: 8px 10px;
+    color: var(--text-strong);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .sidebar-mini-form {
+    display: grid;
+    gap: 8px;
+    padding: 0 10px 10px;
+  }
+
+  .sidebar-mini-form input {
+    min-height: 36px;
+    font-size: 12px;
+  }
+
+  .sidebar-mini-form button,
+  .sidebar-inline-actions button {
+    min-height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .sidebar-inline-actions .danger-button {
+    border-color: rgba(255, 123, 114, 0.28);
+    background: rgba(255, 123, 114, 0.1);
+  }
+
+  .sidebar-row {
+    display: grid;
+    gap: 6px;
+  }
+
+  .sidebar-row-actions {
+    display: flex;
+    gap: 8px;
+    padding-left: 24px;
+  }
+
+  .pin-form,
+  .delete-form {
+    margin: 0;
+  }
+
+  .delete-form button,
+  .pin-form button {
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+  }
+</style>
+
+<div class="sidebar-shell cockpit-sidebar-shell">
+  <div class="sidebar-brand">
+    <div class="brand-mark">WR</div>
+    <div class="brand-copy">
+      <div class="brand-label">WHITE ROOM</div>
+      <div class="brand-title">Local AI cockpit</div>
+      <div class="brand-subtitle">Quiet local chat workspace.</div>
+    </div>
+  </div>
+
+  <section class="sidebar-section">
+    <div class="section-label">Active project</div>
+    <a class="project-link is-active" href="/chat/{{ project.slug }}">
+      <span class="project-dot {{ project_accent_class }}"></span>
+      <span class="project-copy">
+        <span class="project-name">{{ project.name }}</span>
+        <span class="project-purpose">{{ project.status }} &middot; {{ conversation_count }} threads</span>
+      </span>
+    </a>
+    <div class="chip-row">
+      <span class="route-chip">{{ project.status }}</span>
+      <span class="thread-chip">{{ conversation_count }} threads</span>
+      <span class="path-chip">{{ message_count }} messages</span>
+    </div>
+  </section>
+
+  <section class="sidebar-section">
+    <div class="section-label">Projects</div>
+    <div class="sidebar-actions">
+      <details>
+        <summary>New project</summary>
+        <form class="sidebar-mini-form" method="post" action="/projects/create">
+          <input type="text" name="name" placeholder="Project name" required />
+          <button type="submit">Create</button>
+        </form>
+      </details>
+      {% if project_count_total > 1 %}
+      <form method="post" action="/projects/{{ project.slug }}/delete">
+        <button type="submit" class="danger-button">Delete current</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="project-list">
+      {% set palette = ["accent-2", "accent-3", "accent-4", "accent-5", "accent"] %}
+      {% for item in all_projects() %}
+      <a class="project-link {% if item.slug == project.slug %}is-active{% endif %}" href="/chat/{{ item.slug }}">
+        <span class="project-dot {{ palette[loop.index0 % palette|length] }}"></span>
+        <span class="project-copy">
+          <span class="project-name">{{ item.name }}</span>
+          <span class="project-purpose">{{ item.status }}</span>
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="sidebar-section">
+    <div class="section-label">Conversations</div>
+    <div class="sidebar-actions">
+      <details>
+        <summary>New thread</summary>
+        <form class="sidebar-mini-form" method="post" action="/chat/{{ project.slug }}/conversations/create">
+          <input type="text" name="title" placeholder="Conversation title" />
+          <button type="submit">Create</button>
+        </form>
+      </details>
+    </div>
+    <div class="project-list">
+      {% for conversation in conversations %}
+      <div class="sidebar-row">
+        <a class="project-link {% if conversation.id == selected_conversation.id %}is-active{% endif %}" href="/chat/{{ project.slug }}?conversation_id={{ conversation.id }}">
+          <span class="project-dot {% if conversation.pinned %}accent-5{% else %}accent-2{% endif %}"></span>
+          <span class="project-copy">
+            <span class="project-name">#{{ conversation.id }} {{ conversation.title }}</span>
+            <span class="project-purpose">
+              {% if conversation.pinned %}pinned first &middot; {% endif %}{{ conversation.message_count }} messages
+            </span>
+          </span>
+        </a>
+        <div class="sidebar-row-actions">
+          <form class="pin-form" method="post" action="/chat/{{ project.slug }}/conversations/{{ conversation.id }}/pin">
+            <button type="submit" class="pin-button {% if conversation.pinned %}is-pinned{% endif %}">
+              {% if conversation.pinned %}Pinned{% else %}Pin{% endif %}
+            </button>
+          </form>
+          {% if conversation_count > 1 %}
+          <form class="delete-form" method="post" action="/chat/{{ project.slug }}/conversations/{{ conversation.id }}/delete">
+            <button type="submit" class="danger-button">Delete</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="empty">No conversations yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="sidebar-section">
+    {% include "components/tools_menu.html" %}
+  </section>
+</div>

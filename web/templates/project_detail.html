@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Project Detail{% endblock %}
+
+{% block content %}
+<div class="grid-two">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Current Status</h2>
+      <span class="badge accent-2">brain/current_status.md</span>
+    </div>
+    <div class="panel-body">
+      <pre class="status-box">{{ current_status }}</pre>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Brain Files</h2>
+      <span class="badge accent-4">{{ brain_file_count }}</span>
+    </div>
+    <div class="panel-body">
+      <div class="stack">
+        {% for file in brain_files %}
+        <details {% if file.name == "current_status.md" %}open{% endif %}>
+          <summary class="panel-head" style="cursor: pointer;">
+            <h3 class="panel-title">{{ file.name }}</h3>
+            <span class="badge">{{ file.content | length }} chars</span>
+          </summary>
+          <div class="panel-body">
+            <pre class="status-box">{{ file.content }}</pre>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

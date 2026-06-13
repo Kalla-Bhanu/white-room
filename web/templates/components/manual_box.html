@@ -1,0 +1,173 @@
+{% set workflow_kind = workflow_kind or 'all' %}
+
+{% if workflow_kind in ['all', 'manual'] %}
+<section class="panel manual-box-panel" id="manual-claude-lane">
+  <div class="panel-head">
+    <h2 class="panel-title">Manual Claude lane</h2>
+    <span class="badge accent-3">export / paste / import</span>
+  </div>
+  <div class="panel-body">
+    {% if manual_error %}
+    <div class="error">{{ manual_error }}</div>
+    {% elif manual_import_result %}
+    <div class="created">
+      imported assistant reply into {{ manual_import_result.target }} and saved handoff {{ manual_import_result.handoff_path }}
+    </div>
+    {% elif manual_export_result %}
+    <div class="notice">
+      export written to {{ manual_export_result.path }} (estimated tokens {{ manual_export_result.token_estimate }})
+    </div>
+    {% else %}
+    <div class="empty-state" style="margin-bottom: 14px;">
+      <div class="empty-title">Paste-only lane.</div>
+      <div class="empty-copy">
+        Export the current conversation to a local markdown file, paste Claude's reply back here, and import it as an assistant message plus handoff. If the lane is unavailable, the flow stays local and honest.
+      </div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/chat/{{ selected_conversation.id }}/export-manual" class="manual-box-form" style="margin-bottom: 16px;">
+      <div class="chip-row">
+        <span class="route-chip">{{ project.slug }}</span>
+        <span class="thread-chip">conversation {{ selected_conversation.id }}</span>
+        <span class="path-chip">export only</span>
+      </div>
+      <div class="actions" style="justify-content: flex-start; margin-top: 0;">
+        <button type="submit">Export context</button>
+      </div>
+    </form>
+
+    <form method="post" action="/chat/{{ selected_conversation.id }}/import-manual" class="manual-box-form">
+      <div class="field-grid">
+        <div class="field field-wide">
+          <label for="manual_target">Target brain file</label>
+          <select id="manual_target" name="target">
+            {% for target in manual_target_options %}
+            <option value="{{ target }}" {% if target == manual_default_target %}selected{% endif %}>{{ target }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field field-wide">
+          <label for="manual_content">Pasted Claude reply</label>
+          <textarea id="manual_content" name="content" placeholder="Paste the Claude response here">{{ manual_content or manual_default_content }}</textarea>
+        </div>
+      </div>
+      <div class="command-actions">
+        <div class="chip-row">
+          <span class="thread-chip">assistant message saved</span>
+          <span class="path-chip">single target write</span>
+          <span class="path-chip">handoff recorded</span>
+        </div>
+        <div class="actions" style="margin-top: 0;">
+          <button type="submit">Import reply</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+{% if workflow_kind in ['all', 'codex'] %}
+<section class="panel manual-box-panel" id="codex-execution-lane">
+  <div class="panel-head">
+    <h2 class="panel-title">Codex execution lane</h2>
+    <span class="badge accent-4">manual execution packet</span>
+  </div>
+  <div class="panel-body">
+    {% if codex_error %}
+    <div class="error">{{ codex_error }}</div>
+    {% elif codex_import_result %}
+    <div class="created">
+      imported Codex reply into {{ codex_import_result.target }} and saved handoff {{ codex_import_result.handoff_path }}
+    </div>
+    {% elif codex_export_result %}
+    <div class="notice">
+      Codex packet written to {{ codex_export_result.path }} (estimated tokens {{ codex_export_result.token_estimate }})
+    </div>
+    {% else %}
+    <div class="empty-state" style="margin-bottom: 14px;">
+      <div class="empty-title">Codex manual packet lane.</div>
+      <div class="empty-copy">
+        Export the current conversation as a Codex execution packet, paste the reply back here, and import it as a
+        local brain update plus handoff.
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="chip-row" style="margin-bottom: 14px;">
+      {% for mode in codex_mode_catalog %}
+      <span class="status-chip {% if mode.current %}ok{% elif mode.approval_required %}warn{% else %}bad{% endif %}">
+        {{ mode.label }}
+      </span>
+      {% endfor %}
+    </div>
+
+    <form method="post" action="/chat/{{ selected_conversation.id }}/export-codex" class="manual-box-form" style="margin-bottom: 16px;">
+      <div class="chip-row">
+        <span class="route-chip">{{ project.slug }}</span>
+        <span class="thread-chip">conversation {{ selected_conversation.id }}</span>
+        <span class="path-chip">manual_execution</span>
+      </div>
+      <div class="actions" style="justify-content: flex-start; margin-top: 0;">
+        <button type="submit">Export Codex packet</button>
+      </div>
+    </form>
+
+    <form method="post" action="/chat/{{ selected_conversation.id }}/import-codex" class="manual-box-form">
+      <div class="field-grid">
+        <div class="field field-wide">
+          <label for="codex_target">Target brain file</label>
+          <select id="codex_target" name="target">
+            {% for target in codex_target_options %}
+            <option value="{{ target }}" {% if target == codex_default_target %}selected{% endif %}>{{ target }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field field-wide">
+          <label for="codex_content">Pasted Codex reply</label>
+          <textarea id="codex_content" name="content" placeholder="Paste the Codex response here">{{ codex_content or codex_default_content }}</textarea>
+        </div>
+      </div>
+      <div class="command-actions">
+        <div class="chip-row">
+          <span class="thread-chip">assistant message saved</span>
+          <span class="path-chip">single target write</span>
+          <span class="path-chip">handoff recorded</span>
+        </div>
+        <div class="actions" style="margin-top: 0;">
+          <button type="submit">Import Codex reply</button>
+        </div>
+      </div>
+    </form>
+
+    <div style="margin-top: 14px;">
+      <div class="section-label" style="margin-bottom: 8px;">Recent Codex packets</div>
+      {% if codex_packet_history %}
+      <div class="feed-list compact">
+        {% for packet in codex_packet_history %}
+        <div class="feed-row">
+          <div class="feed-copy">
+            <div class="feed-title">Packet {{ packet.id }} · {{ packet.status }}</div>
+            <div class="feed-subtitle">
+              {{ packet.created_at }} · {{ packet.mode }}{% if packet.task_id %} · task {{ packet.task_id }}{% endif %}
+            </div>
+            <div class="feed-subtitle">{{ packet.artifact_path }}</div>
+          </div>
+          <div class="chip-row">
+            <span class="status-chip {% if packet.status == 'imported' %}ok{% else %}warn{% endif %}">{{ packet.target or 'pending' }}</span>
+            <span class="path-chip">est {{ packet.token_estimate }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-title">No Codex packets yet.</div>
+        <div class="empty-copy">Exports and imports will show up here after the first Codex packet is written.</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+

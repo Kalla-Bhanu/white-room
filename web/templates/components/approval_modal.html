@@ -1,0 +1,62 @@
+<section class="panel" style="margin-top: 16px;">
+  <div class="panel-head">
+    <h2 class="panel-title">Approval gate</h2>
+    <span class="badge accent-3">Gate #{{ approval_gate.id }}</span>
+  </div>
+  <div class="panel-body">
+    <div class="feed-list">
+      <div class="feed-item">
+        <div class="feed-head">
+          <div class="feed-title">{{ approval_gate.action_type }}</div>
+          <span class="status-chip {% if approval_gate.status == 'approved' %}ok{% elif approval_gate.status == 'denied' %}bad{% else %}warn{% endif %}">
+            {{ approval_gate.status }}
+          </span>
+        </div>
+        <div class="feed-body">{{ approval_gate.payload_summary }}</div>
+        <div class="chip-row">
+          <span class="route-chip">endpoint {{ approval_gate.target_endpoint_id or 'none' }}</span>
+          <span class="thread-chip">project {{ approval_gate.project_id }}</span>
+          <span class="path-chip">decided {{ approval_gate.decided_at or 'pending' }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if approval_gate.status != 'approved' %}
+    <form method="post" action="/approval/{{ approval_gate.id }}/decide" class="command-surface" style="margin-top: 14px;">
+      <input type="hidden" name="return_to" value="{{ approval_return_to }}" />
+      <div class="field-grid">
+        <div class="field field-wide">
+          <label for="decision">Decision</label>
+          <select id="decision" name="decision">
+            <option value="approve">approve</option>
+            <option value="deny">deny</option>
+          </select>
+        </div>
+      </div>
+      {% if approval_gate.action_type == 'codex_execute_packet' %}
+      <div class="field" style="margin-top: 12px;">
+        <label class="toggle-pill">
+          <input type="checkbox" name="trust_session" value="1" />
+          <span>Trust codex-lb for this session</span>
+        </label>
+        <div class="field-hint">Creates a coarse approval grant for in-scope Codex LB calls until it expires.</div>
+      </div>
+      {% endif %}
+      <div class="command-actions">
+        <div class="chip-row">
+          <span class="path-chip">explicit only</span>
+          <span class="thread-chip">no auto-approve</span>
+          {% if selected_model_name %}
+          <span class="route-chip">{{ selected_model_name }}</span>
+          {% endif %}
+        </div>
+        <div class="actions" style="margin-top: 0;">
+          <button type="submit">Save decision</button>
+        </div>
+      </div>
+    </form>
+    {% else %}
+    <div class="notice" style="margin-top: 14px;">This gate is approved. Re-run the route to continue with the approved state.</div>
+    {% endif %}
+  </div>
+</section>

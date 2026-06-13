@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Import - {{ project.slug }}{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+{% if import_result %}
+<div class="result">imported into {{ import_result.target }}</div>
+{% endif %}
+
+<section class="stats" aria-label="Import stats">
+  <div class="stat">
+    <div class="stat-label">Handoffs</div>
+    <div class="stat-value">{{ handoffs|length }}</div>
+    <div class="stat-note">recorded transitions</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Target</div>
+    <div class="stat-value" style="font-size: 14px; line-height: 1.4;">brain file</div>
+    <div class="stat-note">selected import destination</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Mode</div>
+    <div class="stat-value" style="font-size: 14px; line-height: 1.4;">manual_claude</div>
+    <div class="stat-note">local import lane</div>
+  </div>
+</section>
+
+<div class="grid-two">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Paste Manual Claude Output</h2>
+      <span class="badge accent-2">POST /import/manual</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" action="/import/manual">
+        <input type="hidden" name="slug" value="{{ project.slug }}" />
+        <div class="field">
+          <label for="target">Target brain file</label>
+          <select id="target" name="target">
+            {% for target in target_options %}
+            <option value="{{ target }}">{{ target }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="content">Claude output</label>
+          <textarea id="content" name="content" placeholder="Paste the manual Claude output here."></textarea>
+        </div>
+        <div class="actions">
+          <button type="submit">Import output</button>
+        </div>
+      </form>
+      {% if import_result %}
+      <div class="stack" style="margin-top: 16px;">
+        <div class="field">
+          <label>Target path</label>
+          <div class="meta">{{ import_result.path }}</div>
+        </div>
+        <div class="field">
+          <label>Handoff path</label>
+          <div class="meta">{{ import_result.handoff_path }}</div>
+        </div>
+        <div class="field">
+          <label>Source file</label>
+          <div class="meta">{{ import_result.source_file }}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Import Preview</h2>
+      <span class="badge accent-4">core.manual_lane.import_manual_claude_output()</span>
+    </div>
+    <div class="panel-body">
+      {% if import_result %}
+      <pre class="preview">{{ import_result | tojson(indent=2) }}</pre>
+      {% else %}
+      <div class="meta">Paste content and choose a target to run the manual import lane.</div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<div class="stack">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Recent Handoffs</h2>
+      <span class="badge">{{ handoffs|length }} total</span>
+    </div>
+    <div class="table-wrap">
+      {% if handoffs %}
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for handoff in handoffs %}
+          <tr>
+            <td class="mono">{{ handoff.created_at }}</td>
+            <td>{{ handoff.from_worker }}</td>
+            <td>{{ handoff.to_worker }}</td>
+            <td>{{ handoff.summary }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="panel-body empty">No handoffs recorded yet.</div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

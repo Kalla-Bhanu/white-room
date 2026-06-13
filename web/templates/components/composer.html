@@ -1,0 +1,459 @@
+<section class="panel cockpit-composer-panel">
+<style>
+    .composer-mode-shell {
+      display: grid;
+      gap: 8px;
+    }
+
+    .composer-lane-shell {
+      display: grid;
+      gap: 8px;
+    }
+
+    .composer-mode-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .composer-mode-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .composer-mode-surface {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .composer-lane-surface {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mode-choice-button,
+    .mode-more-summary,
+    .lane-choice-button,
+    .lane-more-summary {
+      min-height: 34px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-strong);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .mode-choice-button.is-active {
+      border-color: rgba(124, 140, 255, 0.38);
+      background: rgba(124, 140, 255, 0.14);
+    }
+
+    .lane-choice-button.is-active {
+      border-color: rgba(86, 215, 214, 0.34);
+      background: rgba(86, 215, 214, 0.12);
+    }
+
+    .mode-more {
+      position: relative;
+    }
+
+    .lane-more {
+      position: relative;
+    }
+
+    .mode-more[open] .mode-more-summary,
+    .lane-more[open] .lane-more-summary {
+      border-color: rgba(86, 215, 214, 0.3);
+      background: rgba(86, 215, 214, 0.12);
+    }
+
+    .mode-more-summary {
+      list-style: none;
+      cursor: pointer;
+    }
+
+    .mode-more-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .lane-more-summary {
+      list-style: none;
+      cursor: pointer;
+    }
+
+    .lane-more-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .mode-more-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 6;
+      display: grid;
+      gap: 6px;
+      min-width: 180px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(11, 14, 20, 0.98);
+      box-shadow: var(--shadow);
+    }
+
+    .lane-more-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 6;
+      display: grid;
+      gap: 6px;
+      min-width: 240px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(11, 14, 20, 0.98);
+      box-shadow: var(--shadow);
+    }
+
+    .mode-more-menu button {
+      justify-content: flex-start;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-strong);
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .lane-more-menu button,
+    .lane-more-menu a {
+      display: block;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-strong);
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .lane-more-menu button:hover,
+    .lane-more-menu a:hover {
+      border-color: rgba(86, 215, 214, 0.24);
+      background: rgba(86, 215, 214, 0.08);
+    }
+
+    .mode-more-menu button:hover {
+      border-color: rgba(124, 140, 255, 0.24);
+      background: rgba(124, 140, 255, 0.08);
+    }
+
+    .hidden-mode-select {
+      display: none;
+    }
+
+    .codex-lane-shell {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid rgba(124, 140, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .codex-lane-shell.is-inactive {
+      border-color: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.01);
+      opacity: 0.88;
+    }
+
+    .codex-lane-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .codex-lane-title {
+      color: var(--text-strong);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .codex-lane-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .codex-model-picker {
+      display: grid;
+      gap: 8px;
+    }
+
+    .codex-model-select {
+      min-height: 38px;
+      border-radius: 12px;
+    }
+</style>
+
+{% set selected_lane_effective = request.query_params.get('lane_override') or request.query_params.get('lane') or selected_lane %}
+{% set groq_lane_visible = groq_cloud_state and groq_cloud_state.live_calls_allowed %}
+
+  <div class="panel-head">
+    <div>
+      <h2 class="panel-title">Command surface</h2>
+      <div class="panel-kicker">Conversation, route, and context stay in one place.</div>
+    </div>
+    <div class="chip-row">
+      <span class="status-chip ok" data-current-mode-chip>{{ selected_mode|capitalize }}</span>
+      <span class="route-chip" data-current-lane-chip>{{ selected_lane_effective }}</span>
+      <span class="path-chip">conversation {{ selected_conversation.id }}</span>
+    </div>
+  </div>
+  <div class="panel-body">
+    {% if runner_snapshot.reachable %}
+    <div class="notice">
+      {{ runner_snapshot.status }} · the local lane is reachable on localhost.
+    </div>
+    {% else %}
+    <div class="warning">
+      {{ runner_snapshot.status }} · the workspace will keep the lane honest and stay in dry-run mode.
+    </div>
+    {% endif %}
+
+    <form id="chat-send-form" class="cockpit-composer-form" method="post" action="/chat/{{ selected_conversation.id }}/send" data-chat-form>
+      <div class="field field-wide">
+        <label for="chat-content">Prompt</label>
+        <textarea id="chat-content" name="content" rows="5" placeholder="Ask the local lane to draft, summarize, inspect, or revise this project memory."></textarea>
+      </div>
+
+      <div class="cockpit-composer-grid">
+        <div class="field">
+          <div class="composer-lane-shell">
+            <div class="composer-mode-header">
+              <label class="composer-mode-label" for="chat-lane">Lane</label>
+              <span class="path-chip" data-current-lane-label>{{ selected_lane_effective|replace('_', ' ')|title }}</span>
+            </div>
+            <div class="composer-lane-surface" data-lane-surface>
+              {% for option in chat_lane_options %}
+              {% if option.value in ['auto', 'ollama_local', 'lmstudio_local', 'codex_lb', 'manual_claude'] or (groq_lane_visible and option.value == 'groq_cloud') %}
+              <button
+                type="button"
+                class="lane-choice-button {% if option.value == selected_lane_effective %}is-active{% endif %}"
+                data-lane-choice="{{ option.value }}"
+              >
+                {{ option.label }}
+              </button>
+              {% endif %}
+              {% endfor %}
+              <details class="lane-more">
+                <summary class="lane-more-summary">More lanes</summary>
+                <div class="lane-more-menu" role="menu" aria-label="Connect providers">
+                  <div class="path-chip">Connect providers</div>
+                  {% for option in chat_lane_options %}
+                  {% if option.value not in ['auto', 'ollama_local', 'lmstudio_local', 'codex_lb', 'manual_claude'] %}
+                  <button
+                    type="button"
+                    class="lane-choice-button"
+                    data-lane-choice="{{ option.value }}"
+                    {% if option.disabled %}disabled{% endif %}
+                    title="{{ option.reason }}"
+                  >
+                    {{ option.label }}
+                  </button>
+                  {% endif %}
+                  {% endfor %}
+                  <a href="/settings">Connect providers</a>
+                </div>
+              </details>
+            </div>
+            <select id="chat-lane" name="lane_override" class="hidden-mode-select" data-layout-pref="chat_last_lane">
+              {% for option in chat_lane_options %}
+              <option value="{{ option.value }}" {% if option.value == selected_lane_effective %}selected{% endif %} {% if option.disabled %}disabled{% endif %}>
+                {{ option.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="codex-lane-shell {% if not codex_lb_state or not codex_lb_state.live_calls_allowed %}is-inactive{% endif %}">
+            <div class="codex-lane-head">
+              <div class="codex-lane-title">Codex LB</div>
+              <div class="chip-row">
+                {% if codex_lb_state %}
+                <span class="status-chip {% if codex_lb_state.connection_state == 'connected' or codex_lb_state.connection_state == 'synced' %}ok{% elif codex_lb_state.connection_state == 'rate-limited' %}warn{% elif codex_lb_state.connection_state == 'key missing' %}bad{% else %}warn{% endif %}">
+                  {{ codex_lb_state.connection_state }}
+                </span>
+                <span class="path-chip">{{ codex_lb_state.key_fingerprint }}</span>
+                {% if codex_lb_state.models_synced %}
+                <span class="path-chip">models synced</span>
+                {% else %}
+                <span class="path-chip">sync models in Settings</span>
+                {% endif %}
+                {% if codex_lb_state.active_grant %}
+                <span class="route-chip">trusted session active</span>
+                {% endif %}
+                {% else %}
+                <span class="path-chip">provider state unavailable</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if codex_lb_state and codex_lb_state.models %}
+            <div class="codex-model-picker">
+              <label class="composer-mode-label" for="chat-model-name">Model</label>
+              <select id="chat-model-name" name="model_name" class="codex-model-select" data-layout-pref="chat_last_codex_model" {% if selected_lane_effective == 'groq_cloud' %}disabled{% endif %}>
+                {% for model in codex_lb_state.models %}
+                <option value="{{ model.model_name }}" {% if model.model_name == selected_codex_model_name %}selected{% endif %}>
+                  {{ model.model_name }}{% if model.context_window %} · {{ model.context_window }} ctx{% endif %}
+                </option>
+                {% endfor %}
+              </select>
+              <div class="codex-lane-meta">
+                {{ codex_lb_state.models_probe_url or "Sync models in Settings to populate the picker." }}
+              </div>
+            </div>
+            {% else %}
+            <div class="codex-lane-meta">Connect the key and sync models in Settings to unlock the live Codex LB picker.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="codex-lane-shell {% if not groq_cloud_state or not groq_cloud_state.live_calls_allowed %}is-inactive{% endif %}">
+            <div class="codex-lane-head">
+              <div class="codex-lane-title">Groq Cloud</div>
+              <div class="chip-row">
+                {% if groq_cloud_state %}
+                <span class="status-chip {% if groq_cloud_state.connection_state == 'connected' or groq_cloud_state.connection_state == 'synced' %}ok{% elif groq_cloud_state.connection_state == 'rate-limited' %}warn{% elif groq_cloud_state.connection_state == 'key missing' %}bad{% else %}warn{% endif %}">
+                  {{ groq_cloud_state.connection_state }}
+                </span>
+                <span class="path-chip">{{ groq_cloud_state.key_fingerprint }}</span>
+                {% if groq_cloud_state.models_synced %}
+                <span class="path-chip">models synced</span>
+                {% else %}
+                <span class="path-chip">sync models in Settings</span>
+                {% endif %}
+                {% if groq_cloud_state.active_grant %}
+                <span class="route-chip">trusted session active</span>
+                {% endif %}
+                {% else %}
+                <span class="path-chip">provider state unavailable</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if groq_cloud_state and groq_cloud_state.models %}
+            <div class="codex-model-picker">
+              <label class="composer-mode-label" for="groq-model-name">Model</label>
+              <select id="groq-model-name" name="model_name" class="codex-model-select" data-layout-pref="chat_last_groq_model" {% if selected_lane_effective != 'groq_cloud' %}disabled{% endif %}>
+                {% for model in groq_cloud_state.models %}
+                <option value="{{ model.model_name }}" {% if model.model_name == selected_groq_model_name %}selected{% endif %}>
+                  {{ model.model_name }}{% if model.context_window %} · {{ model.context_window }} ctx{% endif %}
+                </option>
+                {% endfor %}
+              </select>
+              <div class="codex-lane-meta">
+                {{ groq_cloud_state.models_probe_url or "Sync models in Settings to populate the Groq picker." }}
+              </div>
+            </div>
+            {% else %}
+            <div class="codex-lane-meta">Connect the Groq Cloud key and sync models in Settings to unlock the live picker.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="composer-mode-shell">
+            <div class="composer-mode-header">
+              <label class="composer-mode-label" for="chat-mode">Mode</label>
+              <span class="path-chip" data-current-mode-label>{{ selected_mode|capitalize }}</span>
+            </div>
+            <div class="composer-mode-surface" data-mode-surface>
+              {% for option in chat_mode_options %}
+              {% if option.value in ['ask', 'plan', 'execute'] %}
+              <button
+                type="button"
+                class="mode-choice-button {% if option.value == selected_mode %}is-active{% endif %}"
+                data-mode-choice="{{ option.value }}"
+              >
+                {{ option.label }}
+              </button>
+              {% endif %}
+              {% endfor %}
+              <details class="mode-more">
+                <summary class="mode-more-summary">More</summary>
+                <div class="mode-more-menu" role="menu" aria-label="More modes">
+                  {% for option in chat_mode_options %}
+                  {% if option.value not in ['ask', 'plan', 'execute'] %}
+                  <button type="button" class="mode-choice-button" data-mode-choice="{{ option.value }}">
+                    {{ option.label }}
+                  </button>
+                  {% endif %}
+                  {% endfor %}
+                </div>
+              </details>
+            </div>
+            <select id="chat-mode" name="mode" class="hidden-mode-select" data-layout-pref="chat_last_mode">
+              {% for option in chat_mode_options %}
+              <option value="{{ option.value }}" {% if option.value == selected_mode %}selected{% endif %}>
+                {{ option.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="field composer-attach-field">
+          <label>Attach</label>
+          <div class="composer-attach-grid" role="group" aria-label="Attach controls">
+            <label class="toggle-pill">
+              <input type="checkbox" name="attach_brain_files" checked />
+              <span>brain files</span>
+            </label>
+            <label class="toggle-pill">
+              <input type="checkbox" name="attach_task_packet" />
+              <span>task packet</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="cockpit-composer-actions">
+        <div class="chip-row">
+          <span class="path-chip">{{ latest_session.lane or "deterministic" }}</span>
+          <span class="path-chip">session {% if latest_session.id %}{{ latest_session.id }}{% else %}n/a{% endif %}</span>
+          <span class="path-chip">{{ selected_conversation.title }}</span>
+        </div>
+        <button type="submit">Send local draft</button>
+      </div>
+    </form>
+
+    <div id="chat-stream-banner" class="chat-stream-banner">
+      <div class="empty-title">Ready</div>
+      <div class="empty-copy">Local turn streaming appears here. The lane stays honest if the runner is unavailable.</div>
+    </div>
+  </div>
+</section>

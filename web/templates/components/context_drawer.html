@@ -1,0 +1,23 @@
+<aside class="context-drawer" aria-label="Context drawer" data-active-section="{{ drawer_section }}">
+  <div class="context-drawer-head">
+    <div>
+      <div class="panel-kicker">Context drawer</div>
+      <div class="context-drawer-title">Project memory, routes, tasks, and manual lanes.</div>
+      <div class="context-drawer-copy">Open only when needed. The default view stays centered on the conversation.</div>
+    </div>
+    <label class="badge accent-3" for="context-drawer-toggle">Close</label>
+  </div>
+
+  <nav class="context-drawer-nav" aria-label="Drawer sections">
+    <a href="#context-card-memory" data-drawer-section="memory" class="{% if drawer_section == 'memory' %}is-active{% endif %}">Memory</a>
+    <a href="#context-card-task" data-drawer-section="task" class="{% if drawer_section == 'task' %}is-active{% endif %}">Task</a>
+    <a href="#context-card-route" data-drawer-section="route" class="{% if drawer_section == 'route' %}is-active{% endif %}">Route</a>
+    <a href="#context-card-status" data-drawer-section="status" class="{% if drawer_section == 'status' %}is-active{% endif %}">Status</a>
+    <a href="#manual-claude-lane" data-drawer-section="claude" class="{% if drawer_section == 'claude' %}is-active{% endif %}">Claude</a>
+    <a href="#codex-execution-lane" data-drawer-section="codex" class="{% if drawer_section == 'codex' %}is-active{% endif %}">Codex</a>
+  </nav>
+
+  <div class="context-drawer-body">
+    {% include "components/context_rail.html" %}
+  </div>
+</aside>

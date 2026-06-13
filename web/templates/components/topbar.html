@@ -1,0 +1,29 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <label class="sidebar-toggle-button" for="sidebar-toggle" aria-label="Toggle workspace navigation">&#9776;</label>
+    <div class="topbar-copy">
+      <div class="topbar-eyebrow">{% if project %}{{ project.slug }} workspace{% else %}WHITE ROOM workspace{% endif %}</div>
+      <h1 class="page-title">{{ page_title or "WHITE ROOM" }}</h1>
+      {% if page_meta %}
+      <p class="page-meta">{{ page_meta }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="topbar-badges" aria-label="Workspace status">
+    {% if project %}
+    <span class="badge accent-5">{{ project.status }}</span>
+    <span class="badge accent-2">Localhost only</span>
+    <a class="badge accent-2" href="/agents/{{ project.slug }}">Agents</a>
+    {% else %}
+    <span class="badge accent-2">Workspace index</span>
+    {% endif %}
+    <a class="badge accent-4" href="/settings">Settings</a>
+    <span class="badge {% if ui_theme_choice == 'dark' %}accent-5{% else %}accent-4{% endif %}">Theme: {{ ui_theme_choice|default('dark') }}</span>
+    <form method="post" action="/preferences/theme">
+      <input type="hidden" name="theme" value="{{ ui_theme_toggle }}" />
+      <button type="submit" class="theme-toggle" title="Toggle theme">
+        Theme: {{ ui_theme_choice|default('dark') }}
+      </button>
+    </form>
+  </div>
+</header>

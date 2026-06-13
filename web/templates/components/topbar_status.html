@@ -1,0 +1,106 @@
+<header class="topbar cockpit-topbar">
+  <div class="topbar-left">
+    <label class="sidebar-toggle-button" for="sidebar-toggle" aria-label="Toggle workspace navigation">&#9776;</label>
+    <div class="topbar-copy">
+      <div class="topbar-eyebrow">{% if project %}{{ project.slug }} cockpit{% else %}WHITE ROOM cockpit{% endif %}</div>
+      <h1 class="page-title">{{ page_title or "WHITE ROOM" }}</h1>
+      {% if page_meta %}
+      <p class="page-meta">{{ page_meta }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="topbar-badges cockpit-topbar-badges" aria-label="Cockpit status">
+    {% if project %}
+    {% set selected_lane_override = request.query_params.get('lane_override') or request.query_params.get('lane') %}
+    {% set active_lane = selected_lane_override or selected_lane or (latest_route_decision.chosen_lane if latest_route_decision else (latest_session.lane if latest_session else "deterministic")) %}
+    {% set lane_label = active_lane|replace('_', ' ')|title %}
+    {% set health_label = topbar_health.label if topbar_health else lane_label %}
+    {% set health_dot = topbar_health.dot_class if topbar_health else ('ok' if runner_snapshot.reachable else 'bad') %}
+    {% set health_detail = topbar_health.detail if topbar_health else runner_snapshot.message %}
+    {% set usage_label = usage_snapshot.total_window_label if usage_snapshot else "window n/a" %}
+    {% set cost_label = usage_snapshot.total_est_cost_label if usage_snapshot else "est $0.0000" %}
+    <details class="topbar-chip-popover">
+      <summary class="badge accent-3 topbar-chip-summary" aria-label="Open provider health details">
+        Providers: {{ provider_health_summary or "checking" }}
+      </summary>
+      <div class="topbar-chip-menu">
+        <div class="topbar-chip-title">Provider health</div>
+        {% for provider in provider_health_cards or [] %}
+        <div class="topbar-chip-copy">{{ provider.label }}</div>
+        <div class="topbar-chip-rows">
+          <span class="status-chip {% if provider.connection_state in ['connected', 'synced'] %}ok{% elif provider.connection_state == 'rate-limited' %}warn{% elif provider.connection_state == 'key missing' %}bad{% else %}warn{% endif %}">
+            {{ provider.connection_state }}
+          </span>
+          <span class="path-chip">{{ provider.key_fingerprint }}</span>
+          <span class="path-chip">{{ provider.models_synced_label }}</span>
+          {% if provider.rate_limited and provider.cooldown_remaining %}
+          <span class="thread-chip">cooldown {{ provider.cooldown_remaining }}</span>
+          {% endif %}
+          {% if provider.latency_ms is not none %}
+          <span class="thread-chip">{{ provider.latency_ms }} ms</span>
+          {% endif %}
+        </div>
+        {% if provider.health_detail %}
+        <div class="topbar-chip-copy">{{ provider.health_detail }}</div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </details>
+    <details class="topbar-chip-popover">
+      <summary class="badge accent-5 topbar-chip-summary" aria-label="Open health details">
+        <span class="presence-dot {{ health_dot }}"></span>
+        Status: {{ health_label }}
+      </summary>
+      <div class="topbar-chip-menu">
+        <div class="topbar-chip-title">Health detail</div>
+        <div class="topbar-chip-copy">{{ health_detail }}</div>
+        <div class="topbar-chip-rows">
+          <span class="status-chip {% if runner_snapshot.reachable %}ok{% else %}bad{% endif %}">{{ runner_snapshot.status }}</span>
+          <span class="path-chip">{{ runner_snapshot.message }}</span>
+          <a class="badge accent-2" href="/endpoints">Endpoints</a>
+        </div>
+      </div>
+    </details>
+    <details class="topbar-chip-popover">
+      <summary class="badge accent-4 topbar-chip-summary" aria-label="Open lane details">
+        Lane: <span data-topbar-lane-label>{{ lane_label }}</span>
+      </summary>
+      <div class="topbar-chip-menu">
+        <div class="topbar-chip-title">Lane detail</div>
+        <div class="topbar-chip-copy">
+          Current mode {{ selected_mode|replace('_', ' ')|title }}. The cockpit lane stays tied to the live composer selection.
+        </div>
+        {% if latest_route_decision %}
+        <div class="topbar-chip-copy">{{ latest_route_decision.explanation }}</div>
+        {% endif %}
+        <div class="topbar-chip-rows">
+          <a class="badge accent-2" href="/chat/{{ project.slug }}?conversation_id={{ selected_conversation.id }}&lane_override=auto">Auto</a>
+          <a class="badge accent-2" href="/chat/{{ project.slug }}?conversation_id={{ selected_conversation.id }}&lane_override=ollama_local">Ollama Local</a>
+          <a class="badge accent-2" href="/chat/{{ project.slug }}?conversation_id={{ selected_conversation.id }}&lane_override=lmstudio_local">LM Studio Local</a>
+          <a class="badge accent-2" href="/chat/{{ project.slug }}?conversation_id={{ selected_conversation.id }}&lane_override=codex_lb">Codex LB</a>
+          {% if groq_cloud_state and groq_cloud_state.live_calls_allowed %}
+          <a class="badge accent-2" href="/chat/{{ project.slug }}?conversation_id={{ selected_conversation.id }}&lane_override=groq_cloud">Groq Cloud</a>
+          {% endif %}
+          <a class="badge accent-2" href="/chat/{{ project.slug }}?conversation_id={{ selected_conversation.id }}&lane_override=manual_claude">Manual Claude</a>
+        </div>
+      </div>
+    </details>
+    <details class="topbar-chip-popover">
+      <summary class="badge accent-2 topbar-chip-summary" aria-label="Open usage details">
+        Cost: {{ cost_label }}
+      </summary>
+      <div class="topbar-chip-menu">
+        <div class="topbar-chip-title">Usage detail</div>
+        <div class="topbar-chip-copy">{{ usage_label }}</div>
+        <div class="topbar-chip-rows">
+          <span class="path-chip">estimated only</span>
+          <span class="thread-chip">{{ conversation_count }} threads</span>
+          <a class="badge accent-4" href="/usage">Usage monitor</a>
+        </div>
+      </div>
+    </details>
+    {% else %}
+    <span class="badge accent-2">Workspace index</span>
+    {% endif %}
+  </div>
+</header>

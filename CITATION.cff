@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: WHITE ROOM
+message: "If you use this project or build from its workflow concept, please cite it."
+type: software
+authors:
+  - family-names: Kalla
+    given-names: Bhanu
+year: 2026
+license: MIT
+repository-code: "https://github.com/Kalla-Bhanu/white-room"
+abstract: "A local-first AI workbench for routing project work across local models, cloud APIs, manual LLM sessions, and coding agents while preserving local memory, approvals, and cost-aware workflows."

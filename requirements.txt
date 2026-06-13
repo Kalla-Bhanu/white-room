@@ -1,0 +1,6 @@
+typer
+jinja2
+python-dotenv
+fastapi
+uvicorn
+httpx

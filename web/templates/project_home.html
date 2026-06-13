@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Project Home - {{ project.slug }}{% endblock %}
+
+{% block content %}
+<section class="metric-grid" aria-label="Project home summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Project state</div>
+    <div class="metric-value">{{ project.status }}</div>
+    <div class="metric-note">{{ project.one_line_purpose }}</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Next task</div>
+    <div class="metric-value" style="font-size: 18px;">{% if next_task %}#{{ next_task.id }}{% else %}none{% endif %}</div>
+    <div class="metric-note">{% if next_task %}{{ next_task.title }}{% else %}No queued task yet.{% endif %}</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Recent handoffs</div>
+    <div class="metric-value">{{ handoff_count }}</div>
+    <div class="metric-note">{{ open_task_count }} open or active tasks.</div>
+  </div>
+  <div class="metric-card accent">
+    <div class="metric-label">Health</div>
+    <div class="metric-value">{{ health_snapshot.status }}</div>
+    <div class="metric-note">{{ health_snapshot.message }}</div>
+  </div>
+</section>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Project Home</h2>
+      <span class="badge accent-2">{{ project.slug }}</span>
+    </div>
+    <div class="panel-body">
+      <div class="command-surface">
+        <div class="command-input">
+          <div class="label">Current status</div>
+          <div class="prompt">The project memory, next action, and health summary stay visible together in one local workbench view.</div>
+          <div class="placeholder" style="margin-top: 10px;">Dark overview. Quick actions stay safe and local.</div>
+        </div>
+        <div class="command-actions">
+          <div class="chip-row">
+            <a class="badge accent-2" href="/board/{{ project.slug }}">Open board</a>
+            <a class="badge accent-4" href="/chat/{{ project.slug }}">Open chat</a>
+            <a class="badge accent-5" href="/routes/{{ project.slug }}">Route decisions</a>
+            <a class="badge accent-3" href="/timeline/{{ project.slug }}">Timeline</a>
+            <a class="badge accent" href="/endpoints">Endpoints</a>
+          </div>
+          <div class="chip-row" style="margin-top: 8px;">
+            <span class="route-chip">{{ project.slug }}</span>
+            <span class="thread-chip">orchestrator</span>
+            <span class="path-chip">local brain only</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="workspace-grid board" style="margin-top: 16px;">
+        <section class="panel" style="margin: 0;">
+          <div class="panel-head">
+            <h3 class="panel-title">Next Action</h3>
+            <span class="badge accent-4">task focus</span>
+          </div>
+          <div class="panel-body">
+            {% if next_task %}
+            <div class="feed-item">
+              <div class="feed-head">
+                <div class="feed-title">#{{ next_task.id }} {{ next_task.title }}</div>
+                <span class="status-chip {% if next_task.status == 'done' %}ok{% elif next_task.status == 'blocked' %}bad{% else %}warn{% endif %}">{{ next_task.status }}</span>
+              </div>
+              <div class="feed-body">{{ next_task.goal }}</div>
+              <div class="chip-row">
+                <span class="route-chip">{{ next_task.preferred_tier }}</span>
+                <span class="thread-chip">{{ next_task.thread }}</span>
+                <span class="path-chip">{{ next_task.updated_at }}</span>
+              </div>
+            </div>
+            {% else %}
+            <div class="meta">No task packet is queued yet for this project.</div>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="panel" style="margin: 0;">
+          <div class="panel-head">
+            <h3 class="panel-title">Current Status</h3>
+            <span class="badge accent-5">brain/current_status.md</span>
+          </div>
+          <div class="panel-body">
+            <div class="status-frame">
+              <div class="status-caption">Summary</div>
+              <div class="status-body">{{ current_status }}</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Health Summary</h2>
+      <span class="badge accent-4">{{ health_snapshot.endpoints|length }} endpoints</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">{{ health_snapshot.status }}</div>
+            <span class="status-chip {% if health_snapshot.reachable %}ok{% else %}warn{% endif %}">
+              {% if health_snapshot.reachable %}reachable{% else %}offline{% endif %}
+            </span>
+          </div>
+          <div class="feed-body">{{ health_snapshot.message }}</div>
+          <div class="feed-meta">{{ health_snapshot.checked_at }}</div>
+        </div>
+        {% for endpoint in health_snapshot.endpoints %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">{{ endpoint.name }}</div>
+            <span class="status-chip {% if endpoint.reachable %}ok{% else %}warn{% endif %}">
+              {% if endpoint.reachable %}up{% else %}offline{% endif %}
+            </span>
+          </div>
+          <div class="feed-body">{{ endpoint.endpoint_class }}</div>
+          <div class="chip-row">
+            <span class="route-chip">{{ endpoint.base_url }}</span>
+            <span class="thread-chip">{% if endpoint.key_present %}key present{% else %}no key{% endif %}</span>
+            <span class="path-chip">{{ endpoint.result }}</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="feed-item">
+          <div class="feed-body">No endpoint health rows yet.</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Recent Handoffs</h2>
+      <span class="badge accent-2">{{ handoff_count }} total</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for handoff in recent_handoffs %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">{{ handoff.from_worker }} → {{ handoff.to_worker }}</div>
+            <span class="path-chip mono">{{ handoff.created_at }}</span>
+          </div>
+          <div class="feed-body">{{ handoff.summary }}</div>
+          <div class="chip-row">
+            <span class="thread-chip">{{ handoff.task_id or 'no task' }}</span>
+            <span class="route-chip">{{ handoff.artifact_paths }}</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="feed-item">
+          <div class="feed-body">No handoffs recorded yet for this project.</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Quick Actions</h2>
+      <span class="badge accent-5">safe local links</span>
+    </div>
+    <div class="panel-body">
+      <div class="chip-row">
+        <a class="badge accent-2" href="/board/{{ project.slug }}">Board</a>
+        <a class="badge accent-4" href="/chat/{{ project.slug }}">Chat</a>
+        <a class="badge accent-5" href="/routes/{{ project.slug }}">Routes</a>
+        <a class="badge accent" href="/timeline/{{ project.slug }}">Timeline</a>
+        <a class="badge accent-3" href="/endpoints">Endpoints</a>
+        <a class="badge accent-2" href="/usage">Usage</a>
+        <a class="badge accent-4" href="/agents/{{ project.slug }}">Agents</a>
+      </div>
+      <div class="status-frame" style="margin-top: 16px;">
+        <div class="status-caption">Project memory</div>
+        <div class="status-body">{{ project.path }}</div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

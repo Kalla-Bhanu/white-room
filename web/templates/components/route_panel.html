@@ -1,0 +1,65 @@
+<aside class="panel route-panel">
+  <div class="panel-head">
+    <h2 class="panel-title">Route Decision</h2>
+    <span class="badge accent-3">latest decision</span>
+  </div>
+  <div class="panel-body">
+    {% if latest_route_decision %}
+    <div class="feed-list compact">
+      <div class="feed-item">
+        <div class="feed-head">
+          <div class="feed-title">Decision #{{ latest_route_decision.id }}</div>
+          <span class="status-chip {% if latest_route_decision.requires_approval %}warn{% else %}ok{% endif %}">
+            {% if latest_route_decision.requires_approval %}approval required{% else %}approved{% endif %}
+          </span>
+        </div>
+        <div class="feed-body">{{ latest_route_decision.explanation }}</div>
+        <div class="chip-row">
+          <span class="route-chip">{{ latest_route_decision.chosen_lane }}</span>
+          <span class="thread-chip">{{ latest_route_decision.task_type }} / {{ latest_route_decision.size }}</span>
+          <span class="path-chip">{{ latest_route_decision.risk }}</span>
+        </div>
+        <div class="feed-meta">
+          {% if latest_route_decision.task_title %}
+          Task: {{ latest_route_decision.task_title }}{% if latest_route_decision.task_status %} &middot; {{ latest_route_decision.task_status }}{% endif %}<br />
+          {% endif %}
+          Source: {{ latest_route_decision.source }} &middot; {{ latest_route_decision.created_at }}
+        </div>
+      </div>
+
+      <div class="feed-item">
+        <div class="feed-head">
+          <div class="feed-title">Candidates</div>
+          <span class="badge accent-4">{{ latest_route_decision.candidates|length }}</span>
+        </div>
+        <div class="presence-list">
+          {% for candidate in latest_route_decision.candidates %}
+          <div class="presence-row">
+            <span class="presence-dot {% if candidate.selected %}ok{% else %}bad{% endif %}"></span>
+            <div class="presence-copy">
+              <div class="presence-name">{{ candidate.endpoint_class }}</div>
+              <div class="presence-state">
+                {% if candidate.selected %}selected{% else %}{{ candidate.reject_reason or candidate.reason }}{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="chip-row">
+        <a class="badge accent-2" href="/routes/{{ project.slug }}">Open explorer</a>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-title">No route decision yet.</div>
+      <div class="empty-copy">Run a task route or send a chat turn with a route decision attached, and the latest lane will appear here. Until then, the route preview remains unavailable and the rail stays ready.</div>
+      <div class="chip-row" style="margin-top: 10px;">
+        <a class="badge accent-2" href="/routes/{{ project.slug }}">Open explorer</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</aside>
+

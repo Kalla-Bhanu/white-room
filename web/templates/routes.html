@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Routes - {{ project.slug }}{% endblock %}
+
+{% block content %}
+<section class="metric-grid" aria-label="Route explorer summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Decisions</div>
+    <div class="metric-value">{{ decision_count }}</div>
+    <div class="metric-note">Route decisions on record.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Approval gates</div>
+    <div class="metric-value">{{ approval_count }}</div>
+    <div class="metric-note">Decisions that carried approval pressure.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Preview rows</div>
+    <div class="metric-value">{{ preview_count }}</div>
+    <div class="metric-note">Dry-run and preview entries.</div>
+  </div>
+</section>
+
+<section class="panel hero-panel">
+  <div class="panel-head">
+    <h2 class="panel-title">Route Decision Explorer</h2>
+    <span class="badge accent-3">{{ project.slug }}</span>
+  </div>
+  <div class="panel-body">
+    {% if decisions %}
+    <div class="feed-list">
+      {% for decision in decisions %}
+      <article class="feed-item">
+        <div class="feed-head">
+          <div class="feed-title">Decision #{{ decision.id }} · {{ decision.chosen_lane }}</div>
+          <span class="status-chip {% if decision.requires_approval %}warn{% else %}ok{% endif %}">
+            {% if decision.requires_approval %}approval{% else %}clear{% endif %}
+          </span>
+        </div>
+        <div class="feed-body">{{ decision.explanation }}</div>
+        <div class="chip-row">
+          <span class="route-chip">{{ decision.task_type }}</span>
+          <span class="thread-chip">{{ decision.risk }} / {{ decision.size }}</span>
+          <span class="path-chip">{{ decision.source }}</span>
+          {% if decision.task_title %}
+          <span class="path-chip">task {{ decision.task_id }} · {{ decision.task_title }}</span>
+          {% endif %}
+        </div>
+        <div class="registry-metrics">
+          <div class="registry-metric">
+            <div class="metric-label">Status</div>
+            <div class="metric-value">{{ decision.status }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Created</div>
+            <div class="metric-value">{{ decision.created_at }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Task message</div>
+            <div class="metric-value">{% if decision.message_role %}{{ decision.message_role }}{% else %}n/a{% endif %}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Candidates</div>
+            <div class="metric-value">{{ decision.candidates|length }}</div>
+          </div>
+        </div>
+
+        <div class="presence-list">
+          {% for candidate in decision.candidates %}
+          <div class="presence-row">
+            <span class="presence-dot {% if candidate.selected %}ok{% else %}bad{% endif %}"></span>
+            <div class="presence-copy">
+              <div class="presence-name">{{ candidate.endpoint_class }}</div>
+              <div class="presence-state">
+                {% if candidate.selected %}
+                selected · {{ candidate.reason }}
+                {% else %}
+                rejected · {{ candidate.reject_reason or candidate.reason }}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if decision.message_content %}
+        <div class="registry-notes">Linked message: {{ decision.message_content }}</div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-title">No route decisions recorded yet.</div>
+      <div class="empty-copy">Run a task route or a local chat turn and the explorer will fill with lane history, candidates, and explanations.</div>
+      <div class="actions" style="justify-content: flex-start; margin-top: 2px;">
+        <a class="badge accent-2" href="/board/{{ project.slug }}">Open board</a>
+        <a class="badge accent-4" href="/chat/{{ project.slug }}">Open chat</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

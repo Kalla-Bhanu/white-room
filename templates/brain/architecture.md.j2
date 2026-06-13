@@ -1,0 +1,15 @@
+# Architecture -- {{ project_name }}
+
+## System Shape
+Local files are canonical. SQLite stores rebuildable structured indexes.
+
+## Phase 0 Components
+- CLI command: `whiteroom new <name>`
+- Project scaffolder
+- Brain and thread templates
+- SQLite schema initialization
+
+## Constraints
+- Deterministic code only.
+- No network calls.
+- No model calls.

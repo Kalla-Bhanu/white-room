@@ -1,0 +1,94 @@
+<div class="sidebar-shell">
+  <div class="sidebar-brand">
+    <div class="brand-mark">WR</div>
+    <div class="brand-copy">
+      <div class="brand-label">WHITE ROOM</div>
+      <div class="brand-title">Local AI workbench</div>
+      <div class="brand-subtitle">Dark-first. Files first. 127.0.0.1 only.</div>
+    </div>
+  </div>
+
+  <section class="sidebar-section" aria-label="Workspace links">
+    <div class="section-label">Workspace</div>
+    <div class="sidebar-links">
+      <a class="sidebar-link {% if request.url.path.startswith('/projects') %}is-active{% endif %}" href="/projects">
+        <span class="link-icon accent-2"></span>
+        <span class="link-copy">
+          <span class="link-title">Projects</span>
+          <span class="link-subtitle">Registry and workbench entry.</span>
+        </span>
+      </a>
+      <a class="sidebar-link {% if request.url.path.startswith('/endpoints') %}is-active{% endif %}" href="/endpoints">
+        <span class="link-icon accent-4"></span>
+        <span class="link-copy">
+          <span class="link-title">Registry</span>
+          <span class="link-subtitle">Provider profiles and lane metadata.</span>
+        </span>
+      </a>
+      <a class="sidebar-link {% if request.url.path.startswith('/settings') %}is-active{% endif %}" href="/settings">
+        <span class="link-icon accent-5"></span>
+        <span class="link-copy">
+          <span class="link-title">Settings</span>
+          <span class="link-subtitle">Presence-only keys and profile toggles.</span>
+        </span>
+      </a>
+      <a class="sidebar-link {% if request.url.path.startswith('/benchmarks') %}is-active{% endif %}" href="/benchmarks">
+        <span class="link-icon accent-4"></span>
+        <span class="link-copy">
+          <span class="link-title">Benchmarks</span>
+          <span class="link-subtitle">Verified scores and latency/cost rows.</span>
+        </span>
+      </a>
+      <a class="sidebar-link {% if request.url.path.startswith('/usage') %}is-active{% endif %}" href="/usage">
+        <span class="link-icon accent-5"></span>
+        <span class="link-copy">
+          <span class="link-title">Usage</span>
+          <span class="link-subtitle">Token and estimated cost gauges.</span>
+        </span>
+      </a>
+      <a class="sidebar-link {% if request.url.path.startswith('/runner') %}is-active{% endif %}" href="/runner">
+        <span class="link-icon accent-3"></span>
+        <span class="link-copy">
+          <span class="link-title">Runner</span>
+          <span class="link-subtitle">Local health and availability.</span>
+        </span>
+      </a>
+      {% if project %}
+      <a class="sidebar-link {% if request.url.path.startswith('/agents/' ~ project.slug) %}is-active{% endif %}" href="/agents/{{ project.slug }}">
+        <span class="link-icon accent-2"></span>
+        <span class="link-copy">
+          <span class="link-title">Agents</span>
+          <span class="link-subtitle">Ten thread columns and approved steps.</span>
+        </span>
+      </a>
+      {% endif %}
+      {% if project %}
+      <a class="sidebar-link {% if request.url.path == '/chat/' ~ project.slug %}is-active{% endif %}" href="/chat/{{ project.slug }}">
+        <span class="link-icon accent-5"></span>
+        <span class="link-copy">
+          <span class="link-title">Chat</span>
+          <span class="link-subtitle">Read-only conversation history.</span>
+        </span>
+      </a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="sidebar-section" aria-label="Project list">
+    <div class="section-label">Projects</div>
+    <div class="project-list">
+      {% set palette = ["accent-2", "accent-3", "accent-4", "accent-5", "accent"] %}
+      {% for item in all_projects() %}
+      <a class="project-link {% if project and item.slug == project.slug %}is-active{% endif %}" href="/board/{{ item.slug }}">
+        <span class="project-dot {{ palette[loop.index0 % palette|length] }}"></span>
+        <span class="project-copy">
+          <span class="project-name">{{ item.slug }}</span>
+          <span class="project-purpose">board lane / {{ item.status }}</span>
+        </span>
+      </a>
+      {% else %}
+      <div class="empty">No projects indexed yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>

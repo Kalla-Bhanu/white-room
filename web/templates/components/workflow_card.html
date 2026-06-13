@@ -1,0 +1,34 @@
+{% set workflow_kind = workflow_kind or 'manual' %}
+{% set workflow_visible = workflow_visible if workflow_visible is defined else false %}
+<section
+  class="panel workflow-card-panel"
+  data-workflow-card
+  data-workflow-kind="{{ workflow_kind }}"
+  data-workflow-visible="{% if workflow_visible %}1{% else %}0{% endif %}"
+  {% if not workflow_visible %}hidden{% endif %}
+>
+  <div class="panel-head">
+    <div>
+      <h2 class="panel-title">{% if workflow_kind == 'codex' %}Codex execution workflow{% else %}Manual Claude workflow{% endif %}</h2>
+      <div class="panel-kicker">
+        {% if workflow_kind == 'codex' %}
+        Build a manual execution packet, keep the gate visible, and import the reply when the packet comes back.
+        {% else %}
+        Export a local note, paste Claude's reply back into the workbench, and keep the lane honest.
+        {% endif %}
+      </div>
+    </div>
+    <div class="chip-row">
+      <span class="path-chip">{{ workflow_kind }}</span>
+      {% if workflow_kind == 'codex' %}
+      <span class="status-chip warn">approval-gated</span>
+      {% else %}
+      <span class="status-chip ok">manual import</span>
+      {% endif %}
+    </div>
+    <button type="button" class="badge accent-3" data-workflow-dismiss>Dismiss</button>
+  </div>
+  <div class="panel-body">
+    {% include "components/manual_box.html" %}
+  </div>
+</section>

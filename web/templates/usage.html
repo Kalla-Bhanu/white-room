@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Usage{% endblock %}
+
+{% block content %}
+<section class="metric-grid" aria-label="Usage summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Events</div>
+    <div class="metric-value">{{ total_events }}</div>
+    <div class="metric-note">usage_events rows.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Tokens in</div>
+    <div class="metric-value">{{ total_tokens_in }}</div>
+    <div class="metric-note">Total input tokens.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Tokens out</div>
+    <div class="metric-value">{{ total_tokens_out }}</div>
+    <div class="metric-note">Total output tokens.</div>
+  </div>
+  <div class="metric-card accent-3">
+    <div class="metric-label">Est cost</div>
+    <div class="metric-value">${{ "%.4f"|format(total_est_cost) }}</div>
+    <div class="metric-note">Cost is estimated.</div>
+  </div>
+</section>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Usage Bars</h2>
+      <span class="badge accent-4">est</span>
+    </div>
+    <div class="panel-body">
+      <div class="command-surface">
+        <div class="command-input">
+          <div class="label">Usage monitor</div>
+          <div class="prompt">
+            Token and cost bars are grouped by endpoint and project. The bars stay labeled as estimated values, while
+            the endpoint gauges show how close each lane is to its local window limit.
+          </div>
+          <div class="placeholder" style="margin-top: 10px;">
+            The monitor is read-only. It reflects the usage_events table and the endpoint window counters already in
+            SQLite.
+          </div>
+        </div>
+      </div>
+
+      {% if usage_rows %}
+      <div class="usage-grid" style="margin-top: 16px;">
+        {% for row in usage_rows %}
+        <article class="usage-card">
+          <div class="usage-head">
+            <div>
+              <div class="usage-title">{{ row.endpoint_name }}</div>
+              <div class="usage-subtitle">{{ row.project_slug }} &middot; {{ row.endpoint_name }}</div>
+            </div>
+            <span class="status-chip {% if row.at_limit %}bad{% elif row.window_limit and row.window_used and row.window_used / row.window_limit >= 0.85 %}warn{% else %}ok{% endif %}">
+              est
+            </span>
+          </div>
+
+          <div class="usage-bars">
+            <div class="usage-bar-row">
+              <div class="usage-bar-label">
+                <span>Tokens</span>
+                <span>{{ row.token_total }}</span>
+              </div>
+              <div class="usage-bar-track">
+                <div class="usage-bar-fill" style="width: {{ row.token_bar_percent }}%;"></div>
+              </div>
+            </div>
+
+            <div class="usage-bar-row">
+              <div class="usage-bar-label">
+                <span>Cost</span>
+                <span>est ${{ "%.4f"|format(row.est_cost) }}</span>
+              </div>
+              <div class="usage-bar-track">
+                <div class="usage-bar-fill cost" style="width: {{ row.cost_bar_percent }}%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chip-row">
+            <span class="route-chip">{{ row.events }} events</span>
+            <span class="thread-chip">in {{ row.tokens_in }} / out {{ row.tokens_out }}</span>
+          </div>
+
+          <div class="usage-foot">
+            <div class="usage-note">project {{ row.project_slug }}</div>
+            <div class="usage-note">{{ row.cost_label }}</div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="margin-top: 16px;">
+        <div class="empty-title">No usage rows yet.</div>
+        <div class="empty-copy">
+          The monitor is ready, but there are no usage events in SQLite yet. Once local calls land, the bars and
+          gauges will fill in here.
+        </div>
+        <div class="actions" style="justify-content: flex-start; margin-top: 2px;">
+          <a class="badge accent-2" href="/benchmarks">Open benchmarks</a>
+          <a class="badge accent-4" href="/endpoints">Open registry</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Endpoint Gauges</h2>
+      <span class="badge accent-5">{{ gauges|length }} lanes</span>
+    </div>
+    <div class="panel-body">
+      {% if gauges %}
+      <div class="gauge-grid">
+        {% for gauge in gauges %}
+        <article class="gauge-card">
+          <div class="gauge-head">
+            <div>
+              <div class="gauge-title">{{ gauge.name }}</div>
+              <div class="gauge-subtitle">{{ gauge.endpoint_class }} &middot; {{ gauge.tier }}</div>
+            </div>
+            <span class="status-chip {% if gauge.window_state == 'bad' %}bad{% elif gauge.window_state == 'warn' %}warn{% elif gauge.window_state == 'ok' %}ok{% else %}warn{% endif %}">
+              {{ gauge.window_state }}
+            </span>
+          </div>
+
+          <div class="usage-bar-label">
+            <span>Window gauge</span>
+            <span>{{ gauge.window_label }}</span>
+          </div>
+          <div class="gauge-track">
+            <div class="gauge-fill {{ gauge.window_state }}" style="width: {{ gauge.window_percent }}%;"></div>
+          </div>
+
+          <div class="usage-foot">
+            <div class="gauge-note">
+              {% if gauge.window_limit is not none %}
+              est remaining {{ gauge.window_remaining }}
+              {% else %}
+              est unbounded
+              {% endif %}
+            </div>
+            <div class="gauge-note">{{ gauge.window_reset_at or 'no reset' }}</div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-title">No endpoint gauges yet.</div>
+        <div class="empty-copy">Endpoints are missing or have not been initialized in SQLite.</div>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

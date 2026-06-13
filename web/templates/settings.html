@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Settings{% endblock %}
+
+{% block content %}
+<style>
+  .settings-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .settings-form .registry-meta {
+    margin-top: 6px;
+  }
+</style>
+
+<section class="metric-grid" aria-label="Settings summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Profiles</div>
+    <div class="metric-value">{{ profile_count }}</div>
+    <div class="metric-note">Quiet provider registry entries.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Codex state</div>
+    <div class="metric-value">{{ codex_settings.connection_state }}</div>
+    <div class="metric-note">{{ codex_settings.key_fingerprint }}</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Models</div>
+    <div class="metric-value">{{ codex_settings.models_synced_label }}</div>
+    <div class="metric-note">{{ codex_settings.models_synced_at or 'awaiting sync' }}</div>
+  </div>
+</section>
+
+<section class="panel hero-panel">
+  <div class="panel-head">
+    <h2 class="panel-title">Codex LB provider settings</h2>
+    <div class="chip-row">
+      <span class="status-chip {% if codex_settings.connection_state == 'connected' %}ok{% elif codex_settings.connection_state == 'rate-limited' %}warn{% elif codex_settings.connection_state == 'key missing' %}bad{% else %}warn{% endif %}">
+        {{ codex_settings.connection_state }}
+      </span>
+      <span class="route-chip">{{ codex_settings.base_url_label }}</span>
+      <span class="path-chip">{{ codex_settings.models_probe_url or 'models probe pending' }}</span>
+    </div>
+  </div>
+  <div class="panel-body">
+    {% if settings_notice %}
+    <div class="notice">
+      <strong>{{ settings_notice }}</strong>
+      {% if settings_detail %}<span class="subtle"> {{ settings_detail }}</span>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="registry-grid">
+      <article class="registry-card accent-4">
+        <div class="registry-card-header">
+          <div class="registry-title">
+            <div class="registry-name">Codex LB lane</div>
+            <div class="registry-meta">Presence-only secret storage, no raw key rendering.</div>
+          </div>
+          <span class="status-chip {% if codex_settings.key_present %}ok{% else %}bad{% endif %}">
+            {% if codex_settings.key_present %}key active{% else %}key missing{% endif %}
+          </span>
+        </div>
+
+        <form method="post" action="/settings/providers/codex-lb" class="settings-form">
+          <input type="hidden" name="action" value="save" />
+          <div class="field-grid">
+            <div class="field field-wide">
+              <label for="codex_base_url">Codex LB API base URL</label>
+              <input
+                id="codex_base_url"
+                name="base_url"
+                type="url"
+                value="{{ codex_settings.base_url }}"
+                placeholder="https://kbloadbalancer.198.199.88.10.sslip.io or https://your-lb-host/v1"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <div class="registry-meta">OpenAI-compatible API base. Use the LB host root or a documented /v1 API base, not dashboard URLs.</div>
+            </div>
+            <div class="field field-wide">
+              <label for="codex_api_key">Codex LB API key</label>
+              <input
+                id="codex_api_key"
+                name="api_key"
+                type="password"
+                placeholder="Enter or replace the Codex LB key"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <div class="registry-meta">
+                {% if codex_settings.key_present %}
+                Active key stored locally as <span class="route-chip">{{ codex_settings.key_fingerprint }}</span>. Replace anytime by saving a new key.
+                {% else %}
+                No key stored. Presence only.
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="command-actions">
+            <div class="chip-row">
+              <span class="status-chip {% if codex_settings.live_calls_allowed %}ok{% else %}warn{% endif %}">
+                {% if codex_settings.live_calls_allowed %}live allowed{% else %}manual only{% endif %}
+              </span>
+              <span class="path-chip">{{ codex_settings.health.result }}</span>
+              <span class="path-chip">{{ codex_settings.health.detail }}</span>
+              {% if codex_settings.rate_limited %}
+              <span class="status-chip warn">rate-limited {{ codex_settings.cooldown_remaining }}</span>
+              {% endif %}
+            </div>
+            <div class="actions" style="margin-top: 0;">
+              <button type="submit" name="action" value="save">Save changes</button>
+              <button type="submit" name="action" value="test_connection">Test connection</button>
+              <button type="submit" name="action" value="sync_models">Sync models</button>
+            </div>
+          </div>
+        </form>
+
+        <form method="post" action="/settings/providers/codex-lb" class="settings-form" style="margin-top: 12px;">
+          <input type="hidden" name="action" value="remove_key" />
+          <div class="chip-row">
+            <span class="thread-chip">remove local secret</span>
+            <span class="path-chip">secrets.local.json only</span>
+            <span class="path-chip">reloads without restart</span>
+          </div>
+          <div class="actions" style="justify-content: flex-start; margin-top: 10px;">
+            <button type="submit">Remove key</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="registry-card accent-5">
+        <div class="registry-card-header">
+          <div class="registry-title">
+            <div class="registry-name">Groq Cloud lane</div>
+            <div class="registry-meta">Bearer key lives in the local secrets store only.</div>
+          </div>
+          <span class="status-chip {% if groq_settings.key_present %}ok{% else %}bad{% endif %}">
+            {% if groq_settings.key_present %}key active{% else %}key missing{% endif %}
+          </span>
+        </div>
+
+        <form method="post" action="/settings/providers/groq-cloud" class="settings-form">
+          <input type="hidden" name="action" value="save" />
+          <div class="field-grid">
+            <div class="field field-wide">
+              <label for="groq_base_url">Groq Cloud API base URL</label>
+              <input
+                id="groq_base_url"
+                name="base_url"
+                type="url"
+                value="{{ groq_settings.base_url }}"
+                placeholder="https://api.groq.com/openai/v1"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <div class="registry-meta">Use the Groq API base only: https://api.groq.com/openai/v1. Console/dashboard URLs are rejected.</div>
+            </div>
+            <div class="field field-wide">
+              <label for="groq_api_key">Groq Cloud API key</label>
+              <input
+                id="groq_api_key"
+                name="api_key"
+                type="password"
+                placeholder="Enter or replace the Groq Cloud key"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <div class="registry-meta">
+                {% if groq_settings.key_present %}
+                Active key stored locally as <span class="route-chip">{{ groq_settings.key_fingerprint }}</span>. Replace anytime by saving a new key.
+                {% else %}
+                No key stored. Presence only.
+                {% endif %}
+              </div>
+              {% if groq_settings.models_sync_required %}
+              <div class="registry-meta">Sync models required. Use the button below or save the key again to fetch a current chat model list.</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="command-actions">
+            <div class="chip-row">
+              <span class="status-chip {% if groq_settings.live_calls_allowed %}ok{% else %}warn{% endif %}">
+                {% if groq_settings.live_calls_allowed %}live allowed{% else %}manual only{% endif %}
+              </span>
+              <span class="path-chip">{{ groq_settings.health.result }}</span>
+              <span class="path-chip">{{ groq_settings.health.detail }}</span>
+              {% if groq_settings.rate_limited %}
+              <span class="status-chip warn">rate-limited {{ groq_settings.cooldown_remaining }}</span>
+              {% endif %}
+            </div>
+            <div class="actions" style="margin-top: 0;">
+              <button type="submit" name="action" value="save">Save changes</button>
+              <button type="submit" name="action" value="test_connection">Test connection</button>
+              <button type="submit" name="action" value="sync_models">Sync models</button>
+            </div>
+          </div>
+        </form>
+
+        <form method="post" action="/settings/providers/groq-cloud" class="settings-form" style="margin-top: 12px;">
+          <input type="hidden" name="action" value="remove_key" />
+          <div class="chip-row">
+            <span class="thread-chip">remove local secret</span>
+            <span class="path-chip">secrets.local.json only</span>
+            <span class="path-chip">reloads without restart</span>
+          </div>
+          <div class="actions" style="justify-content: flex-start; margin-top: 10px;">
+            <button type="submit">Remove key</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="registry-card accent-2">
+        <div class="registry-card-header">
+          <div class="registry-title">
+            <div class="registry-name">Runtime state</div>
+            <div class="registry-meta">Health, cooldown, and sync status stay quiet here.</div>
+          </div>
+          <span class="status-chip {% if codex_settings.health.reachable %}ok{% elif codex_settings.connection_state == 'key missing' %}bad{% else %}warn{% endif %}">
+            {% if codex_settings.health.reachable %}reachable{% else %}{{ codex_settings.connection_state }}{% endif %}
+          </span>
+        </div>
+
+        <div class="registry-metrics">
+          <div class="registry-metric">
+            <div class="metric-label">Last checked</div>
+            <div class="metric-value">{{ codex_settings.health.last_checked or 'not yet' }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Latency</div>
+            <div class="metric-value">{% if codex_settings.health.latency_ms is not none %}{{ codex_settings.health.latency_ms }} ms{% else %}n/a{% endif %}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Cooldown</div>
+            <div class="metric-value">{{ codex_settings.runtime.cooldown_until or 'none' }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Window used</div>
+            <div class="metric-value">{{ codex_settings.runtime.window_used }}</div>
+          </div>
+        </div>
+
+        <div class="chip-row">
+          <span class="route-chip">models sync: {{ codex_settings.models_synced_label }}</span>
+          <span class="path-chip">failure count {{ codex_settings.runtime.failure_count }}</span>
+          <span class="path-chip">last success {{ codex_settings.runtime.last_success_at or 'n/a' }}</span>
+        </div>
+        {% if codex_settings.health.last_error %}
+        <div class="notice" style="margin-top: 12px;">
+          {{ codex_settings.health.last_error }}
+        </div>
+        {% endif %}
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2 class="panel-title">Provider registry</h2>
+    <span class="badge accent-4">{{ profile_count }} profiles</span>
+  </div>
+  <div class="panel-body">
+    {% if profiles %}
+    <div class="registry-grid">
+      {% for profile in profiles %}
+      <article class="registry-card accent-{{ (loop.index0 % 4) + 2 }}">
+        <div class="registry-card-header">
+          <div class="registry-title">
+            <div class="registry-name">{{ profile.name }}</div>
+            <div class="registry-meta">{{ profile.endpoint_class }} · {{ profile.compatibility_style }} · role {{ profile.default_role }}</div>
+          </div>
+          <span class="status-chip {% if profile.env_presence_label == 'present' %}ok{% elif profile.env_presence_label == 'partial' %}warn{% elif profile.env_presence_label == 'absent' %}bad{% else %}warn{% endif %}">
+            {{ profile.env_presence_label }}
+          </span>
+        </div>
+        <div class="chip-row">
+          <span class="route-chip">{{ profile.base_url }}</span>
+          <span class="thread-chip">{{ profile.model_name }}</span>
+          <span class="path-chip">{{ profile.capabilities_text }}</span>
+        </div>
+        <div class="registry-metrics">
+          <div class="registry-metric">
+            <div class="metric-label">Context</div>
+            <div class="metric-value">{{ profile.context_window_label }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Cost</div>
+            <div class="metric-value">{{ profile.cost_label }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Streaming</div>
+            <div class="metric-value">{% if profile.supports_streaming %}yes{% else %}no{% endif %}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Live</div>
+            <div class="metric-value">{% if profile.live_calls_allowed %}allowed{% else %}blocked{% endif %}</div>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel-body empty">No provider profiles found.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

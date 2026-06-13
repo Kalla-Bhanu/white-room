@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Timeline{% endblock %}
+
+{% block content %}
+<section class="panel" aria-label="Handoff timeline">
+  <div class="panel-head">
+    <h2 class="panel-title">Handoff Timeline</h2>
+    <span class="badge accent-4">{{ handoff_count }} handoff{% if handoff_count != 1 %}s{% endif %}</span>
+  </div>
+  <div class="table-wrap">
+    {% if handoffs %}
+    <table>
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Summary</th>
+          <th>Artifacts</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for handoff in handoffs %}
+        <tr>
+          <td class="mono">{{ handoff.created_at }}</td>
+          <td>{{ handoff.from_worker }}</td>
+          <td>{{ handoff.to_worker }}</td>
+          <td><div class="summary">{{ handoff.summary }}</div></td>
+          <td class="meta">{{ handoff.artifact_paths or 'none' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="panel-body empty">No handoffs recorded yet.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

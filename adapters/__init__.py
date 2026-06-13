@@ -1,0 +1,1 @@
+"""WHITE ROOM adapter package."""

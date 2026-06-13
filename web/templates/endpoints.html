@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Provider Registry{% endblock %}
+
+{% block content %}
+<section class="metric-grid" aria-label="Provider registry summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Profiles</div>
+    <div class="metric-value">{{ profile_count }}</div>
+    <div class="metric-note">Seeded provider metadata rows.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Local lanes</div>
+    <div class="metric-value">{{ local_profile_count }}</div>
+    <div class="metric-note">Reachable on localhost only.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Cloud lanes</div>
+    <div class="metric-value">{{ cloud_profile_count }}</div>
+    <div class="metric-note">Metadata-only until approved later.</div>
+  </div>
+</section>
+
+<section class="panel hero-panel">
+  <div class="panel-head">
+    <h2 class="panel-title">Provider Registry</h2>
+    <span class="badge accent-4">{{ profile_count }} profiles</span>
+  </div>
+  <div class="panel-body">
+    {% if profiles %}
+    <div class="registry-grid">
+      {% for profile in profiles %}
+      <article class="registry-card accent-{{ (loop.index0 % 4) + 2 }}">
+        <div class="registry-card-header">
+          <div class="registry-title">
+            <div class="registry-name">{{ profile.name }}</div>
+            <div class="registry-meta">
+              <span class="route-chip">{{ profile.endpoint_class }}</span>
+              <span class="thread-chip">{{ profile.compatibility_style }}</span>
+              <span class="path-chip">{{ profile.default_role }}</span>
+            </div>
+          </div>
+          <span class="status-chip {% if profile.live_calls_allowed %}ok{% else %}warn{% endif %}">
+            {% if profile.live_calls_allowed %}live allowed{% else %}metadata only{% endif %}
+          </span>
+        </div>
+
+        <div class="chip-row">
+          <span class="route-chip">{{ profile.base_url }}</span>
+          <span class="thread-chip">{{ profile.model_name }}</span>
+          <span class="path-chip">{{ profile.env_presence_label }}</span>
+        </div>
+
+        <div class="registry-metrics">
+          <div class="registry-metric">
+            <div class="metric-label">Context</div>
+            <div class="metric-value">{{ profile.context_window_label }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Cost</div>
+            <div class="metric-value">{{ profile.cost_label }}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Streaming</div>
+            <div class="metric-value">{% if profile.supports_streaming %}yes{% else %}no{% endif %}</div>
+          </div>
+          <div class="registry-metric">
+            <div class="metric-label">Tools / JSON</div>
+            <div class="metric-value">{% if profile.supports_tools %}tools{% else %}no tools{% endif %} · {% if profile.supports_json %}json{% else %}no json{% endif %}</div>
+          </div>
+        </div>
+
+        <div class="registry-foot">
+          <div class="registry-notes">
+            {{ profile.capabilities_text }}<br />
+            {{ profile.rate_limit_notes }}
+          </div>
+          <div class="chip-row">
+            {% if profile.integration_modes %}
+            <span class="status-chip ok">{{ profile.default_integration_mode }}</span>
+            {% for mode in profile.integration_modes %}
+            <span class="path-chip">{{ mode }}</span>
+            {% endfor %}
+            {% endif %}
+            {% for name in profile.required_env_vars %}
+            <span class="status-chip {% if profile.env_presence_count and profile.env_presence_count == profile.env_presence_total %}ok{% elif profile.env_presence_count %}warn{% else %}bad{% endif %}">{{ name }}</span>
+            {% else %}
+            <span class="status-chip ok">no secret keys</span>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel-body empty">No provider profiles found.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

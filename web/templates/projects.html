@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Projects{% endblock %}
+
+{% block content %}
+<div class="workspace-grid home">
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Workbench Home</h2>
+      <span class="badge accent-5">{{ project_count }} projects</span>
+    </div>
+    <div class="panel-body">
+      <div class="command-surface">
+        <div class="command-input">
+          <div class="label">Local command surface</div>
+          <div class="prompt">
+            Open a project, inspect the active task stream, or queue the next packet without leaving the workspace.
+          </div>
+          <div class="placeholder" style="margin-top: 10px;">
+            Project memory stays local. Routes, threads, and notes stay visible.
+          </div>
+        </div>
+        <div class="command-actions">
+          <div class="chip-row">
+            {% if active_project %}
+            <a class="badge accent-2" href="/board/{{ active_project.slug }}">Open board</a>
+            <a class="badge accent-4" href="/project/{{ active_project.slug }}">Project brain</a>
+            <a class="badge accent-5" href="/timeline/{{ active_project.slug }}">Timeline</a>
+            {% endif %}
+            <a class="badge accent-3" href="/endpoints">Endpoint lanes</a>
+          </div>
+          {% if active_project %}
+          <span class="path-chip">{{ active_project.slug }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="metric-grid" style="margin-top: 16px;">
+        <div class="metric-card accent-2">
+          <div class="metric-label">Active project</div>
+          <div class="metric-value">{% if active_project %}{{ active_project.slug }}{% else %}none{% endif %}</div>
+          <div class="metric-note">{% if active_project %}{{ active_project.status }}{% else %}No projects indexed.{% endif %}</div>
+        </div>
+        <div class="metric-card accent-4">
+          <div class="metric-label">Recent tasks</div>
+          <div class="metric-value">{{ active_tasks|length if active_project else 0 }}</div>
+          <div class="metric-note">Active project task stream.</div>
+        </div>
+        <div class="metric-card accent-5">
+          <div class="metric-label">Endpoint lanes</div>
+          <div class="metric-value">{{ endpoint_count }}</div>
+          <div class="metric-note">Local and metadata-only lanes.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Endpoint Rails</h2>
+      <span class="badge accent-4">{{ endpoint_count }} lanes</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for endpoint in endpoints %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">{{ endpoint.name }}</div>
+            <span class="status-chip {% if 'available' in endpoint.status %}ok{% elif 'metadata' in endpoint.status %}warn{% else %}bad{% endif %}">
+              {{ endpoint.status }}
+            </span>
+          </div>
+          <div class="feed-body">{{ endpoint.endpoint_class }} &middot; {{ endpoint.tier }} &middot; {{ endpoint.profile_name if endpoint.profile_name else 'unlinked profile' }}</div>
+          <div class="feed-meta">{{ endpoint.capabilities }}</div>
+          <div class="chip-row" style="margin-top: 8px;">
+            <span class="route-chip">profile {{ endpoint.profile_id if endpoint.profile_id is not none else 'default' }}</span>
+            <span class="thread-chip">{{ endpoint.model_name if endpoint.model_name else 'n/a' }}</span>
+            <span class="path-chip">{% if endpoint.supports_streaming %}streaming{% else %}no stream{% endif %}</span>
+          </div>
+          <div class="chip-row" style="margin-top: 8px;">
+            <span class="status-chip {% if endpoint.supports_tools %}ok{% else %}warn{% endif %}">{% if endpoint.supports_tools %}tools{% else %}no tools{% endif %}</span>
+            <span class="status-chip {% if endpoint.supports_json %}ok{% else %}warn{% endif %}">{% if endpoint.supports_json %}json{% else %}no json{% endif %}</span>
+            <span class="path-chip">{{ endpoint.input_cost_per_1m if endpoint.input_cost_per_1m is not none else 'n/a' }} / {{ endpoint.output_cost_per_1m if endpoint.output_cost_per_1m is not none else 'n/a' }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </aside>
+</div>
+
+<section class="panel" style="margin-top: 16px;">
+  <div class="panel-head">
+    <h2 class="panel-title">Project Registry</h2>
+    <span class="badge accent-2">{{ project_count }} project{% if project_count != 1 %}s{% endif %}</span>
+  </div>
+  <div class="panel-body">
+    <div class="registry-grid">
+      {% set palette = ["accent-2", "accent-3", "accent-4", "accent-5", "accent"] %}
+      {% for project in projects %}
+      <article class="registry-card {{ palette[loop.index0 % palette|length] }}">
+        <div class="registry-card-header">
+          <div class="registry-title">
+            <div class="registry-name">{{ project.slug }}</div>
+          </div>
+          <span class="status-chip ok">{{ project.status }}</span>
+        </div>
+        <div class="path-chip">{{ project.path }}</div>
+        <div class="registry-card-actions">
+          <a class="badge accent-2" href="/board/{{ project.slug }}">Open board</a>
+          <a class="badge accent-4" href="/project/{{ project.slug }}">Project brain</a>
+          <a class="badge accent-5" href="/timeline/{{ project.slug }}">Timeline</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% if active_project %}
+<div class="workspace-grid home" style="margin-top: 16px;">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Active Thread Cards</h2>
+      <span class="badge accent-3">{{ active_tasks|length }} tasks</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for task in active_tasks[:4] %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">#{{ task.id }} {{ task.title }}</div>
+            <span class="status-chip {% if task.status == 'done' %}ok{% elif task.status == 'blocked' %}bad{% else %}warn{% endif %}">{{ task.status }}</span>
+          </div>
+          <div class="feed-body">{{ task.goal }}</div>
+          <div class="chip-row">
+            <span class="route-chip">{{ task.preferred_tier }}</span>
+            <span class="thread-chip">{{ task.thread }}</span>
+            <span class="path-chip">{{ task.updated_at }}</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="feed-item">
+          <div class="feed-body">No recent tasks in the active project.</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Packet Stream</h2>
+      <span class="badge accent-4">{{ active_packets|length }} packets</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for packet in active_packets[:4] %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">Packet {{ packet.packet_id }} &middot; {{ packet.title }}</div>
+            <span class="route-chip">{{ packet.model_route }}</span>
+          </div>
+          <div class="feed-body">Task {{ packet.task_id }} &middot; {{ packet.token_estimate }} tokens</div>
+          <div class="feed-meta">{{ packet.generated_at }}</div>
+        </div>
+        {% else %}
+        <div class="feed-item">
+          <div class="feed-body">No packets yet for the active project.</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Cockpit - {{ project.slug }}{% endblock %}
+
+{% block workspace_sidebar %}{% include "components/sidebar_cockpit.html" %}{% endblock %}
+{% block workspace_topbar %}{% include "components/topbar_status.html" %}{% endblock %}
+
+{% block content %}
+<style>
+  .cockpit-page {
+    display: grid;
+    gap: 16px;
+  }
+
+  .cockpit-shell {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .cockpit-frame {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    min-width: 0;
+  }
+
+  .cockpit-main {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .cockpit-conversation-panel,
+  .cockpit-composer-panel {
+    min-width: 0;
+  }
+
+  .cockpit-command-strip {
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(124, 140, 255, 0.1);
+    background:
+      linear-gradient(180deg, rgba(124, 140, 255, 0.06), transparent 36%),
+      rgba(255, 255, 255, 0.01);
+  }
+
+  .cockpit-command-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cockpit-command-launch {
+    min-width: auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(124, 140, 255, 0.22);
+    background: rgba(124, 140, 255, 0.08);
+    color: var(--text-strong);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+
+  .cockpit-command-launch:hover {
+    border-color: rgba(124, 140, 255, 0.34);
+    background: rgba(124, 140, 255, 0.14);
+  }
+
+  .cockpit-command-name {
+    color: var(--text-strong);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .cockpit-command-copy {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .route-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .route-summary-chip {
+    display: grid;
+    gap: 2px;
+    min-width: min(100%, 300px);
+    max-width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(124, 140, 255, 0.18);
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, rgba(124, 140, 255, 0.08), transparent 40%),
+      rgba(255, 255, 255, 0.02);
+    color: var(--text-strong);
+    text-align: left;
+    box-shadow: none;
+  }
+
+  .route-summary-chip:hover {
+    border-color: rgba(124, 140, 255, 0.28);
+    background:
+      linear-gradient(180deg, rgba(124, 140, 255, 0.11), transparent 40%),
+      rgba(255, 255, 255, 0.03);
+  }
+
+  .route-summary-chip-lane {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .route-summary-chip-copy {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .panel-kicker {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .empty-title {
+    color: var(--text-strong);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .empty-copy {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .cockpit-message-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .cockpit-message-card {
+    position: relative;
+    display: grid;
+    gap: 10px;
+    max-width: min(100%, 920px);
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 18px;
+    min-width: 0;
+  }
+
+  .cockpit-message-card.user {
+    margin-left: auto;
+    max-width: min(82%, 720px);
+    border-color: rgba(86, 215, 214, 0.16);
+    background: rgba(86, 215, 214, 0.07);
+  }
+
+  .cockpit-message-card.assistant {
+    border-color: rgba(124, 140, 255, 0.12);
+    background:
+      linear-gradient(180deg, rgba(124, 140, 255, 0.06), transparent 36%),
+      rgba(255, 255, 255, 0.018);
+  }
+
+  .cockpit-message-card.system {
+    border-color: rgba(255, 127, 177, 0.16);
+    background: rgba(255, 127, 177, 0.06);
+  }
+
+  .cockpit-message-card.pending {
+    background: rgba(124, 140, 255, 0.06);
+  }
+
+  .cockpit-message-card.error {
+    border-left-color: rgba(255, 123, 114, 0.5);
+    background: rgba(255, 123, 114, 0.06);
+  }
+
+  .cockpit-message-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .cockpit-message-title {
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .cockpit-message-subtitle {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  body[data-workspace="quiet"] .cockpit-message-subtitle,
+  body[data-workspace="quiet"] .cockpit-message-foot {
+    display: none;
+  }
+
+  .cockpit-message-body {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+  }
+
+  .cockpit-message-body > :first-child {
+    margin-top: 0;
+  }
+
+  .cockpit-message-body > :last-child {
+    margin-bottom: 0;
+  }
+
+  .cockpit-message-body p,
+  .cockpit-message-body ul,
+  .cockpit-message-body ol,
+  .cockpit-message-body blockquote,
+  .cockpit-message-body pre,
+  .cockpit-message-body h2,
+  .cockpit-message-body h3,
+  .cockpit-message-body h4 {
+    margin: 0 0 12px;
+  }
+
+  .cockpit-message-body ul,
+  .cockpit-message-body ol {
+    padding-left: 18px;
+  }
+
+  .cockpit-message-body li + li {
+    margin-top: 6px;
+  }
+
+  .cockpit-message-body blockquote {
+    padding-left: 12px;
+    border-left: 2px solid rgba(124, 140, 255, 0.28);
+    color: var(--muted);
+  }
+
+  .cockpit-message-body code {
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-strong);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .cockpit-message-body pre {
+    overflow: auto;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(8, 11, 17, 0.9);
+  }
+
+  .cockpit-message-body pre code {
+    display: block;
+    padding: 0;
+    background: transparent;
+    white-space: pre;
+  }
+
+  .cockpit-message-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chat-stream-banner {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(86, 215, 214, 0.18);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .chat-stream-banner.is-active {
+    border-color: rgba(124, 140, 255, 0.3);
+    background: rgba(124, 140, 255, 0.08);
+    color: var(--text-strong);
+  }
+
+  .cockpit-empty-state {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px dashed rgba(124, 140, 255, 0.2);
+    background: rgba(255, 255, 255, 0.01);
+  }
+
+  .context-drawer-toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .context-drawer-overlay {
+    display: none;
+  }
+
+  .context-drawer {
+    position: fixed;
+    top: 84px;
+    right: 16px;
+    bottom: 16px;
+    width: min(460px, calc(100vw - 32px));
+    z-index: 16;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 24%),
+      rgba(11, 14, 20, 0.96);
+    box-shadow: var(--shadow);
+    transform: translateX(calc(100% + 28px));
+    transition: transform 180ms ease;
+    pointer-events: none;
+  }
+
+  .context-drawer-toggle:checked ~ .cockpit-page .context-drawer {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .context-drawer-toggle:checked ~ .context-drawer-overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .context-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .context-drawer-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .context-drawer-title {
+    color: var(--text-strong);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .context-drawer-copy {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+    margin-top: 4px;
+  }
+
+  .context-drawer-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .context-drawer-nav button,
+  .context-drawer-nav a {
+    min-height: 30px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-strong);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .context-drawer-nav button.is-active,
+  .context-drawer-nav a.is-active {
+    border-color: rgba(124, 140, 255, 0.42);
+    background: rgba(124, 140, 255, 0.14);
+  }
+
+  .context-drawer-body {
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .context-drawer-body .context-stack {
+    gap: 12px;
+  }
+
+  .context-drawer-body .manual-box-panel {
+    margin-top: 0;
+  }
+
+  .context-drawer-body .panel {
+    box-shadow: none;
+  }
+
+  .workflow-card-panel[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .context-drawer {
+      top: 72px;
+      right: 12px;
+      bottom: 12px;
+      width: min(100vw - 24px, 100%);
+      border-radius: 18px;
+    }
+  }
+</style>
+
+{% set drawer_section = ui_preferences().get('context_drawer_section', 'memory') %}
+
+<input
+  class="context-drawer-toggle"
+  id="context-drawer-toggle"
+  type="checkbox"
+  {% if ui_preferences().get('context_drawer_open', '0') == '1' %}checked{% endif %}
+  data-layout-pref="context_drawer_open"
+  data-layout-pref-true-value="1"
+  data-layout-pref-false-value="0"
+/>
+<label class="context-drawer-overlay" for="context-drawer-toggle" aria-hidden="true"></label>
+
+<section class="cockpit-page">
+  <div class="cockpit-shell">
+    <div class="cockpit-frame">
+      <div class="cockpit-main">
+        <section class="panel cockpit-conversation-panel">
+          <div class="panel-head">
+            <h2 class="panel-title">Conversation cockpit</h2>
+            <span class="badge {{ project_accent_class }}">{{ project.slug }}</span>
+          </div>
+          <div class="panel-body">
+            <div class="cockpit-command-strip">
+              <div class="cockpit-command-title">
+                <div class="cockpit-command-name">{{ selected_conversation.title }}</div>
+                <div class="chip-row">
+                  <span class="route-chip">{{ latest_session.lane or "deterministic" }}</span>
+                  <span class="thread-chip">session {% if latest_session.id %}{{ latest_session.id }}{% else %}n/a{% endif %}</span>
+                  <span class="path-chip">{{ message_count }} messages</span>
+                </div>
+                <button type="button" class="cockpit-command-launch" data-command-palette-open aria-label="Open command palette">Ctrl+K</button>
+              </div>
+              <div class="cockpit-command-copy">
+                Conversation stays centered. Context, route details, and manual packet flows open only when you ask for them.
+              </div>
+            </div>
+
+            {% if latest_route_decision %}
+            <div class="route-summary-row" aria-label="Route summary">
+              <button
+                type="button"
+                class="route-summary-chip"
+                data-drawer-section="route"
+                aria-label="Open route details"
+              >
+                <span class="route-summary-chip-lane">{{ latest_route_decision.chosen_lane }}</span>
+                <span class="route-summary-chip-copy">{{ latest_route_decision.explanation|truncate(88, True, "...") }}</span>
+              </button>
+              <span class="path-chip">mode {{ latest_route_decision.mode }}</span>
+              <span class="thread-chip">{% if latest_route_decision.requires_approval %}approval required{% else %}approved{% endif %}</span>
+            </div>
+            {% endif %}
+
+            {% if messages %}
+            <div id="chat-message-list" class="cockpit-message-list">
+              {% for message in messages %}
+              <article class="cockpit-message-card message-card {{ message.role }} {% if message.status == 'error' %}error{% elif message.status == 'draft' %}pending{% endif %}" data-message-id="{{ message.id }}">
+                <div class="cockpit-message-head">
+                  <div>
+                    <div class="cockpit-message-title">{{ message.role|capitalize }}</div>
+                    <div class="cockpit-message-subtitle">
+                      session {{ message.session_id }} &middot; {{ message.created_at }}
+                    </div>
+                  </div>
+                  <div class="chip-row">
+                    <span class="route-chip">{{ message.route_mode }}</span>
+                    <span class="thread-chip">{{ message.endpoint_class or message.status }}</span>
+                  </div>
+                </div>
+                <div class="cockpit-message-body" data-chat-rich-text="1" data-raw-content="{{ message.content|e }}">{{ message.content_html }}</div>
+                <div class="cockpit-message-foot">
+                  <span class="path-chip">tokens {{ message.token_estimate }}</span>
+                  <span class="path-chip">status {{ message.status }}</span>
+                  {% if message.model_name %}
+                  <span class="path-chip">{{ message.model_name }}</span>
+                  {% endif %}
+                  {% if message.error_kind %}
+                  <span class="path-chip">{{ message.error_kind }}</span>
+                  {% endif %}
+                  {% if message.attached_task_id %}
+                  <span class="path-chip">task {{ message.attached_task_id }}</span>
+                  {% endif %}
+                </div>
+              </article>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="cockpit-empty-state">
+              <div class="empty-title">No messages yet.</div>
+              <div class="empty-copy">
+                This conversation is ready for the first local note. The history will appear here once the cockpit starts recording turns.
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </section>
+
+        {% set workflow_kind = 'codex' if selected_lane == 'codex_lb' or selected_mode == 'execute' else 'manual' %}
+        {% set workflow_visible = manual_export_result or manual_import_result or codex_export_result or codex_import_result or approval_gate %}
+        {% include "components/workflow_card.html" %}
+        {% include "components/composer.html" %}
+      </div>
+    </div>
+
+    {% include "components/context_drawer.html" %}
+  </div>
+</section>
+{% if approval_gate %}
+{% include "components/approval_modal.html" %}
+{% endif %}
+{% include "components/command_palette.html" %}
+{% endblock %}

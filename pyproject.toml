@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "white-room"
+version = "0.0.1"
+requires-python = ">=3.11"
+dependencies = ["typer", "jinja2", "python-dotenv", "fastapi", "uvicorn", "httpx"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+whiteroom = "cli.main:app"
+
+[tool.setuptools.packages.find]
+include = ["adapters*", "cli*", "core*", "web*"]
+exclude = ["bench*", "data*", "docs*", "projects*", "templates*", "tests*"]

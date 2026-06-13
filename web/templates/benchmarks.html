@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Benchmarks{% endblock %}
+
+{% block content %}
+<section class="metric-grid" aria-label="Benchmark summary">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Rows</div>
+    <div class="metric-value">{{ benchmark_count }}</div>
+    <div class="metric-note">Verified benchmark rows.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Verified</div>
+    <div class="metric-value">{{ verified_count }}</div>
+    <div class="metric-note">Benchmarks marked verified.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Endpoints</div>
+    <div class="metric-value">{{ endpoint_count }}</div>
+    <div class="metric-note">Endpoint names represented.</div>
+  </div>
+  <div class="metric-card accent-3">
+    <div class="metric-label">Task types</div>
+    <div class="metric-value">{{ task_type_count }}</div>
+    <div class="metric-note">Distinct task-type lanes.</div>
+  </div>
+</section>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Benchmark Score Grid</h2>
+      <span class="badge accent-4">read only</span>
+    </div>
+    <div class="panel-body">
+      <div class="command-surface">
+        <div class="command-input">
+          <div class="label">Verification lab</div>
+          <div class="prompt">
+            The grid below shows verified benchmark results from SQLite. Latency and cost stay visible so the routing
+            heuristics can stay explainable without surfacing raw logs or action buttons here.
+          </div>
+          <div class="placeholder" style="margin-top: 10px;">
+            Benchmarks are confirmed in core. This page only renders the stored score rows.
+          </div>
+        </div>
+      </div>
+
+      {% if benchmark_rows %}
+      <div class="benchmark-grid" style="margin-top: 16px;">
+        {% for row in benchmark_rows %}
+        <article class="benchmark-card {% if row.verified %}verified{% else %}pending{% endif %}">
+          <div class="benchmark-head">
+            <div>
+              <div class="benchmark-title">{{ row.endpoint_name }}</div>
+              <div class="benchmark-subtitle">{{ row.endpoint_class }} &middot; {{ row.task_type }}</div>
+            </div>
+            <span class="status-chip {% if row.verified %}ok{% else %}warn{% endif %}">
+              {% if row.verified %}verified{% else %}draft{% endif %}
+            </span>
+          </div>
+
+          <div class="benchmark-score">
+            <div class="benchmark-score-value">{{ row.score }}</div>
+            <div class="benchmark-score-label">score</div>
+          </div>
+
+          <div class="chip-row">
+            <span class="route-chip">{{ row.run_at }}</span>
+            <span class="thread-chip">source {{ row.source }}</span>
+          </div>
+
+          <div class="benchmark-meta">
+            <div class="registry-metric">
+              <div class="metric-label">Latency</div>
+              <div class="metric-value">{{ row.latency_ms }} ms</div>
+            </div>
+            <div class="registry-metric">
+              <div class="metric-label">Cost</div>
+              <div class="metric-value">${{ "%.4f"|format(row.cost_est) }}</div>
+            </div>
+            <div class="registry-metric">
+              <div class="metric-label">Endpoint</div>
+              <div class="metric-value">{{ row.endpoint_id or "n/a" }}</div>
+            </div>
+            <div class="registry-metric">
+              <div class="metric-label">Benchmark</div>
+              <div class="metric-value">#{{ row.benchmark_id }}</div>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state" style="margin-top: 16px;">
+        <div class="empty-title">No benchmark rows yet.</div>
+        <div class="empty-copy">
+          The lab is ready, but there are no verified benchmark rows to render. Populate fixtures and run a confirmed
+          benchmark to seed the score grid.
+        </div>
+        <div class="actions" style="justify-content: flex-start; margin-top: 2px;">
+          <a class="badge accent-2" href="/board/white-room">Open board</a>
+          <a class="badge accent-4" href="/endpoints">Open registry</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Lab Notes</h2>
+      <span class="badge accent-5">{{ verified_count }} verified</span>
+    </div>
+    <div class="panel-body">
+      <div class="status-frame">
+        <div class="status-caption">What stays visible</div>
+        <div class="status-body">
+          score
+          latency
+          cost
+          verified state
+          endpoint lane
+          task type
+        </div>
+      </div>
+      <div class="presence-list" style="margin-top: 12px;">
+        <div class="presence-row">
+          <span class="presence-dot ok"></span>
+          <div class="presence-copy">
+            <div class="presence-name">Read-only render</div>
+            <div class="presence-state">No verify-confirm actions live on this page.</div>
+          </div>
+        </div>
+        <div class="presence-row">
+          <span class="presence-dot warn"></span>
+          <div class="presence-copy">
+            <div class="presence-name">Explainable grid</div>
+            <div class="presence-state">Each card keeps the score and the lane context together.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

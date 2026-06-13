@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}WHITE ROOM Board - {{ project.slug }}{% endblock %}
+
+{% block content %}
+{% if notice %}
+<div class="notice">{{ notice }}</div>
+{% endif %}
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+{% if created %}
+<div class="created">
+  task {{ created.task_id }} and packet {{ created.packet_id }} written to {{ created.path }} (estimated tokens:
+  {{ created.token_estimate }})
+</div>
+{% endif %}
+
+<section class="metric-grid" aria-label="Workspace metrics">
+  <div class="metric-card accent-2">
+    <div class="metric-label">Tasks</div>
+    <div class="metric-value">{{ task_count }}</div>
+    <div class="metric-note">Managed task rows in SQLite.</div>
+  </div>
+  <div class="metric-card accent-4">
+    <div class="metric-label">Packets</div>
+    <div class="metric-value">{{ packet_count }}</div>
+    <div class="metric-note">Generated packet artifacts.</div>
+  </div>
+  <div class="metric-card accent-5">
+    <div class="metric-label">Project state</div>
+    <div class="metric-value" style="font-size: 15px;">{{ project.status }}</div>
+    <div class="metric-note">Current workbench state.</div>
+  </div>
+</section>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel hero-panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Workbench Command Surface</h2>
+      <span class="badge accent-2">POST /task/create</span>
+    </div>
+    <div class="panel-body">
+      <div class="command-surface">
+        <div class="command-input">
+          <div class="label">Create packet</div>
+          <div class="prompt">
+            Compose the next local task packet. The shell stays on the project brain, and the task table is kept secondary.
+          </div>
+          <div class="placeholder" style="margin-top: 10px;">Command surface preview. No model call is made here.</div>
+        </div>
+
+        <form method="post" action="/task/create">
+          <input type="hidden" name="slug" value="{{ project.slug }}" />
+          <div class="field-grid">
+            <div class="field">
+              <label for="title">Title</label>
+              <input id="title" name="title" type="text" value="{{ form_defaults.title }}" placeholder="Task title" />
+            </div>
+            <div class="field">
+              <label for="size_class">Size</label>
+              <select id="size_class" name="size_class">
+                <option value="small" {% if form_defaults.size_class == "small" %}selected{% endif %}>small</option>
+                <option value="medium" {% if form_defaults.size_class == "medium" %}selected{% endif %}>medium</option>
+                <option value="large" {% if form_defaults.size_class == "large" %}selected{% endif %}>large</option>
+              </select>
+            </div>
+            <div class="field field-wide">
+              <label for="goal">Goal</label>
+              <textarea id="goal" name="goal" placeholder="Explain the work to do">{{ form_defaults.goal }}</textarea>
+            </div>
+            <div class="field">
+              <label for="preferred_route">Preferred route</label>
+              <select id="preferred_route" name="preferred_route">
+                <option value="execution" {% if form_defaults.preferred_route == "execution" %}selected{% endif %}>execution</option>
+                <option value="deterministic" {% if form_defaults.preferred_route == "deterministic" %}selected{% endif %}>deterministic</option>
+                <option value="manual" {% if form_defaults.preferred_route == "manual" %}selected{% endif %}>manual</option>
+                <option value="verification" {% if form_defaults.preferred_route == "verification" %}selected{% endif %}>verification</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="acceptance">Acceptance</label>
+              <textarea id="acceptance" name="acceptance" placeholder="How the work should verify">{{ form_defaults.acceptance }}</textarea>
+            </div>
+            <div class="field field-wide">
+              <label for="expected_output">Expected output</label>
+              <textarea id="expected_output" name="expected_output" placeholder="What the packet should produce">{{ form_defaults.expected_output }}</textarea>
+            </div>
+          </div>
+          <div class="command-actions">
+            <div class="chip-row">
+              <span class="route-chip">route: {{ form_defaults.preferred_route }}</span>
+              <span class="thread-chip">thread: orchestrator</span>
+              <span class="path-chip">brain: current_status.md</span>
+            </div>
+            <div class="actions" style="margin-top: 0;">
+              <button type="submit">Create task</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Project Brain</h2>
+      <span class="badge accent-4">current_status.md</span>
+    </div>
+    <div class="panel-body">
+      <div class="status-frame">
+        <div class="status-caption">Current status</div>
+        <div class="status-body">{{ current_status }}</div>
+      </div>
+      <div class="chip-row" style="margin-top: 12px;">
+        <span class="route-chip">{{ project.slug }}</span>
+        <span class="thread-chip">orchestrator</span>
+        <span class="path-chip">board</span>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="workspace-grid board" style="margin-top: 16px;">
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Recent Tasks</h2>
+      <span class="badge accent-2">{{ task_count }} total</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for task in tasks %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">#{{ task.id }} {{ task.title }}</div>
+            <span class="status-chip {% if task.status == 'done' %}ok{% elif task.status == 'blocked' %}bad{% else %}warn{% endif %}">{{ task.status }}</span>
+          </div>
+          <div class="feed-body">{{ task.goal }}</div>
+          <div class="chip-row">
+            <span class="route-chip">{{ task.preferred_tier }}</span>
+            <span class="thread-chip">{{ task.thread }}</span>
+            <span class="path-chip">{{ task.updated_at }}</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="feed-item"><div class="feed-body">No tasks yet.</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Packet Activity</h2>
+      <span class="badge accent-4">{{ packet_count }} total</span>
+    </div>
+    <div class="panel-body">
+      <div class="feed-list compact">
+        {% for packet in packets %}
+        <div class="feed-item">
+          <div class="feed-head">
+            <div class="feed-title">Packet {{ packet.packet_id }} &middot; {{ packet.title }}</div>
+            <span class="route-chip">{{ packet.model_route }}</span>
+          </div>
+          <div class="feed-body">Task {{ packet.task_id }} &middot; {{ packet.token_estimate }} tokens</div>
+          <div class="feed-meta">{{ packet.generated_at }}</div>
+        </div>
+        {% else %}
+        <div class="feed-item"><div class="feed-body">No packets yet.</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

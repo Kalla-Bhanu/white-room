@@ -1,0 +1,63 @@
+<section class="tools-menu" data-tools-menu>
+  <button
+    class="tools-menu-summary"
+    type="button"
+    aria-expanded="false"
+    aria-controls="tools-menu-panel"
+    data-tools-menu-toggle
+  >
+    <span class="section-label">Tools</span>
+    <span class="tools-menu-copy">7 destinations</span>
+  </button>
+  <div class="tools-menu-panel" id="tools-menu-panel" aria-hidden="true">
+    <a class="project-link {% if request.url.path.startswith('/project/' ~ project.slug) %}is-active{% endif %}" href="/project/{{ project.slug }}">
+      <span class="project-dot accent-2"></span>
+      <span class="project-copy">
+        <span class="project-name">Project brain</span>
+        <span class="project-purpose">memory and handoffs</span>
+      </span>
+    </a>
+    <a class="project-link {% if request.url.path.startswith('/routes/' ~ project.slug) %}is-active{% endif %}" href="/routes/{{ project.slug }}">
+      <span class="project-dot accent-4"></span>
+      <span class="project-copy">
+        <span class="project-name">Routes</span>
+        <span class="project-purpose">route decisions</span>
+      </span>
+    </a>
+    <a class="project-link {% if request.url.path.startswith('/agents/' ~ project.slug) %}is-active{% endif %}" href="/agents/{{ project.slug }}">
+      <span class="project-dot accent-5"></span>
+      <span class="project-copy">
+        <span class="project-name">Agents</span>
+        <span class="project-purpose">threads and approvals</span>
+      </span>
+    </a>
+    <a class="project-link {% if request.url.path.startswith('/benchmarks') %}is-active{% endif %}" href="/benchmarks">
+      <span class="project-dot accent"></span>
+      <span class="project-copy">
+        <span class="project-name">Benchmarks</span>
+        <span class="project-purpose">verified scores</span>
+      </span>
+    </a>
+    <a class="project-link {% if request.url.path.startswith('/usage') %}is-active{% endif %}" href="/usage">
+      <span class="project-dot accent-2"></span>
+      <span class="project-copy">
+        <span class="project-name">Usage</span>
+        <span class="project-purpose">token and cost windows</span>
+      </span>
+    </a>
+    <a class="project-link {% if request.url.path.startswith('/endpoints') %}is-active{% endif %}" href="/endpoints">
+      <span class="project-dot accent-4"></span>
+      <span class="project-copy">
+        <span class="project-name">Endpoints</span>
+        <span class="project-purpose">provider registry</span>
+      </span>
+    </a>
+    <a class="project-link {% if request.url.path.startswith('/settings') %}is-active{% endif %}" href="/settings">
+      <span class="project-dot accent-3"></span>
+      <span class="project-copy">
+        <span class="project-name">Settings</span>
+        <span class="project-purpose">presence-only providers</span>
+      </span>
+    </a>
+  </div>
+</section>
