@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a local-first workflow, provider, routing, or security improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user/security/cost problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the workflow or implementation shape.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Local model workflow
+        - Cloud/provider adapter
+        - Routing policy
+        - Security/privacy
+        - UI/cockpit
+        - Docs/onboarding
+        - Benchmarks/evaluation
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Security and privacy considerations
+      description: What data could leave the local boundary? What should be gated or redacted?
+    validations:
+      required: false

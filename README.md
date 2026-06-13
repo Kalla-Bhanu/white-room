@@ -1,12 +1,14 @@
 # WHITE ROOM
 
-Local-first AI workbench for building serious projects with lower cost, clearer structure, and stronger privacy.
+[![CI](https://github.com/Kalla-Bhanu/white-room/actions/workflows/ci.yml/badge.svg)](https://github.com/Kalla-Bhanu/white-room/actions/workflows/ci.yml)
+
+Production-grade local AI workbench for building serious projects with lower cost, clearer structure, and stronger privacy.
 
 ![WHITE ROOM product tour](docs/assets/white-room-product-tour.gif)
 
 WHITE ROOM is for people who use AI frequently and want to build production-grade work without burning through expensive model limits, losing context across chats, or sending every file to every provider. It turns a project into memory, tasks, routes, approvals, and handoffs, then lets each part of the work use the cheapest capable model.
 
-> Status: alpha skeleton with working provider lanes, local project memory, task packets, model routing, approval gates, and a live cockpit UI. It is designed to be extended locally.
+> Status: production-oriented local developer workbench and extensible skeleton. It is designed for trusted local use or internal forks, not as a hosted multi-tenant SaaS.
 
 ## Why It Exists
 
@@ -103,11 +105,21 @@ The repo includes a sanitized tour captured from the real local product, not a m
 
 The screenshots are generated from a clean demo runtime with placeholder provider URLs and no private API keys, emails, account dashboards, or personal project memory.
 
-## What This Is Not Yet
+## Production Scope
 
-WHITE ROOM is not a finished hosted SaaS and it is not a promise of unlimited free AI. It is a local-first skeleton for people who want to own and extend their workflow.
+WHITE ROOM is production-grade in the local-workbench sense:
 
-The current alpha still needs:
+- repeatable install and demo bootstrap
+- CI release gate
+- sanitized public release workflow
+- local secrets and runtime-state separation
+- documented security model
+- provider/routing/approval architecture
+- issue and PR templates for maintainers
+
+WHITE ROOM is not a finished hosted SaaS and it is not a promise of unlimited free AI. It intentionally avoids multi-tenant hosting, billing, centralized accounts, and managed-provider promises. Those are separate product decisions, not requirements for the local-first tool.
+
+Current hardening areas:
 
 - Cleaner public demo data.
 - Stronger provider-specific error handling.
@@ -147,18 +159,20 @@ Requires Python 3.11+.
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
-```
-
-Create or initialize a project:
-
-```powershell
-python -m cli.main new white-room
+python scripts/doctor.py
+python scripts/bootstrap_demo.py
 ```
 
 Run the web cockpit:
 
 ```powershell
-python -m uvicorn web.server:app --host 127.0.0.1 --port 8765
+python -m cli.main serve --port 8765
+```
+
+Or use the one-command local demo:
+
+```powershell
+.\scripts\run_local.ps1
 ```
 
 Open:
@@ -184,6 +198,13 @@ CUSTOM_OPENAI_API_KEY=your-provider-key
 The Settings UI can store local keys in `secrets.local.json`, which is ignored by git. Keys are displayed only as fingerprints.
 
 See [docs/PROVIDERS.md](docs/PROVIDERS.md).
+
+## Operator Docs
+
+- [Install and run](docs/INSTALL.md)
+- [Local production guide](docs/LOCAL_PRODUCTION.md)
+- [Release process](docs/RELEASE.md)
+- [Security model](docs/SECURITY_MODEL.md)
 
 ## Public Demo Mode
 

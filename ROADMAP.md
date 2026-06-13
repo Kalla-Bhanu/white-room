@@ -1,6 +1,6 @@
 # Roadmap
 
-WHITE ROOM is currently an alpha skeleton with a working local cockpit and live provider lanes. The roadmap is intentionally practical: make it reliable, safe, and easy to extend locally.
+WHITE ROOM is a production-oriented local workbench and extensible skeleton with a working cockpit and provider lanes. The roadmap is intentionally practical: make it more reliable, safer, and easier to extend locally without turning it into a hosted SaaS by default.
 
 ## Now
 

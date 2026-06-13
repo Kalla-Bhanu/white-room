@@ -34,6 +34,7 @@ $excludeDocs = @(
 )
 
 $includeRoots = @(
+    ".github",
     "adapters",
     "bench",
     "cli",
@@ -85,4 +86,5 @@ foreach ($file in $rootFiles) {
 
 Write-Host "Public snapshot created at $destination"
 Write-Host "Review it before publishing:"
-Write-Host "  rg -n `"sk-|gsk_|C:\\Users|gmail|Downloads|Desktop|api_key|password|token|secret`" `"$destination`""
+Write-Host "  cd `"$destination`""
+Write-Host "  python scripts/verify_release.py"

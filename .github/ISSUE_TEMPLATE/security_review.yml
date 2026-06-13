@@ -1,0 +1,29 @@
+name: Security review
+description: Report a security concern without posting exploit details.
+title: "[Security]: "
+labels: ["security"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include real API keys, private project memory, or exploit details that would expose users. For sensitive reports, contact the maintainer privately first.
+  - type: textarea
+    id: concern
+    attributes:
+      label: Concern
+      description: What security boundary, secret-handling path, provider call, or public-release hygiene issue is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential impact
+    validations:
+      required: true
+  - type: textarea
+    id: safe_repro
+    attributes:
+      label: Safe reproduction outline
+      description: Use fake keys and sanitized paths only.
+    validations:
+      required: false
