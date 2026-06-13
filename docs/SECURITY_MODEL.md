@@ -6,6 +6,34 @@ This project does not claim to be immune to compromise. It reduces common AI-wor
 
 ![WHITE ROOM local trust boundary](assets/trust-boundary.svg)
 
+## Why This Is Security Work
+
+Modern AI workflows create a new security surface. Sensitive data can leave an organization through prompts, pasted logs, attached files, generated tool calls, provider keys, screenshots, and persistent chat histories. The risk is not only "which model answered the question"; it is where context went, who can observe it, how much was sent, and whether the user had a reviewable reason for sending it.
+
+WHITE ROOM is security work because it gives that surface structure:
+
+- **Data minimization:** turn large project context into smaller task packets.
+- **Boundary control:** keep project memory, task state, secrets, and route history local by default.
+- **Explicit egress:** treat cloud providers as controlled exits from the local boundary.
+- **Human approval:** gate live provider calls and execution lanes before sensitive or costly actions.
+- **Auditability:** store route decisions, handoffs, usage estimates, and provider health locally.
+- **Least-capable-lane routing:** prefer local or cheaper lanes when high-capability cloud models are not required.
+- **Release hygiene:** separate private runtime state from public source snapshots.
+
+This does not make AI usage risk-free. It changes the default shape of the workflow from "paste everything into a chat box" to "classify the task, attach the minimum useful context, route it deliberately, and record what happened."
+
+## Security Problems It Helps Negate
+
+| AI security problem | Common failure mode | WHITE ROOM mitigation |
+| --- | --- | --- |
+| Shadow AI | Users spread sensitive work across unmanaged tools because official workflows are too slow or expensive. | Provides a local workbench with local, manual, cloud, and custom gateway lanes. |
+| Prompt/context leakage | Full files, logs, plans, and private notes get copied into remote chats. | Uses local project memory and scoped task packets to reduce what leaves the machine. |
+| Secret sprawl | API keys appear in forms, screenshots, logs, browser history, or committed files. | Stores keys locally and renders only missing/active/fingerprint state. |
+| Unreviewed cloud egress | Agents silently call remote providers or expensive models. | Routes by policy and keeps live/costly calls behind approval gates. |
+| Weak incident reconstruction | After an AI-assisted change, nobody knows which model saw what or why. | Records route decisions, handoffs, health state, and usage estimates locally. |
+| Provider lock-in | One hosted tool becomes the only workflow, even when local models would be enough. | Supports local runners, manual lanes, custom gateways, and provider adapters. |
+| Public-source leakage | Builders accidentally publish local DBs, project memory, paths, or secrets. | Public snapshot rules, `.gitignore`, release guide, and leak tests target those failures. |
+
 ## Threats WHITE ROOM Is Built To Reduce
 
 | Threat | Why it matters | WHITE ROOM control |

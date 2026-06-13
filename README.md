@@ -23,6 +23,21 @@ That creates real pain:
 
 WHITE ROOM is built around a different workflow: plan the work, split it into tasks, route each task to the right model, preserve local memory, and keep users in control of cost and privacy.
 
+## Why This Matters For Security
+
+AI is becoming part of daily engineering work, which means security risk is no longer only about code repositories, laptops, and cloud credentials. It is also about prompts, copied files, model context, provider keys, generated packets, and long-lived chat histories.
+
+WHITE ROOM treats AI usage as a security workflow problem:
+
+- **Shadow AI control:** users get a local place to route work instead of pasting sensitive context into random tools.
+- **Smaller cloud blast radius:** cloud providers receive scoped task packets instead of whole project folders or endless chat history.
+- **Local evidence trail:** decisions, handoffs, routes, and usage estimates stay in local project memory for review.
+- **Secret exposure reduction:** keys are presence-only in the UI and kept out of screenshots, exports, logs, and public snapshots.
+- **Approval before external action:** live cloud and execution lanes can be gated instead of silently calling an external service.
+- **Security-friendly extensibility:** teams can add local models, custom gateways, provider policies, and benchmark fixtures without turning the tool into a hosted black box.
+
+That is the security angle: WHITE ROOM does not replace cloud security or endpoint security, but it reduces the amount of sensitive AI context that leaves the local machine and makes the remaining exits visible, scoped, and reviewable.
+
 ## What Makes It Different
 
 Most open-source AI tools are chat frontends, Ollama dashboards, agent runners, or API routers. WHITE ROOM is a project cockpit above those layers.

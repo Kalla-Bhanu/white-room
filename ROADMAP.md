@@ -18,6 +18,8 @@ WHITE ROOM is currently an alpha skeleton with a working local cockpit and live 
 - Cost budget profiles by project.
 - Automatic prompt compression for large local files.
 - Task-specific model policies.
+- Security policy packs for redaction, cloud-egress review, and provider allow/deny rules.
+- Audit export for route decisions, approvals, provider calls, and sanitized handoffs.
 - Provider capability matrix.
 - Stronger import/export for sanitized project memory.
 
@@ -26,6 +28,7 @@ WHITE ROOM is currently an alpha skeleton with a working local cockpit and live 
 - Plugin interface for custom providers.
 - Team-safe local sharing mode.
 - Optional encrypted secrets backend.
+- Deployment hardening guide for reverse proxies, auth, TLS, and network exposure.
 - More benchmark fixtures for project planning, code review, debugging, research, and summarization.
 - Agent lane scheduler for multi-step work.
 - Release packages for Windows, macOS, and Linux.
