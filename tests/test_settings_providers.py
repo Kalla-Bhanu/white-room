@@ -21,7 +21,7 @@ def test_settings_codex_key_save_remove_and_render_are_presence_only(monkeypatch
     monkeypatch.delenv(CODEX_SECRET_NAME, raising=False)
     client = TestClient(server.app)
     original = _snapshot_codex_state()
-    secret_value = "sk-test-super-secret-value"
+    secret_value = "fake-openai-secret-value"
     base_url = "https://codex.example.com/v1"
 
     try:
@@ -154,7 +154,7 @@ def test_settings_groq_key_save_remove_and_render_are_presence_only(monkeypatch,
     _point_secret_store(monkeypatch, tmp_path)
     monkeypatch.delenv(GROQ_SECRET_NAME, raising=False)
     client = TestClient(server.app)
-    secret_value = "gsk-test-super-secret-value"
+    secret_value = "fake-groq-secret-value"
     base_url = "https://api.groq.com/openai/v1"
 
     response = client.post(

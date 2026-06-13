@@ -190,13 +190,13 @@ data/       Local SQLite runtime data; never publish
 
 ## Verification
 
-Run targeted tests:
+Run the public release gate:
 
 ```powershell
 python -m pytest tests/test_phase15_secrets.py tests/test_settings_providers.py tests/test_phase15_groq_models_and_gates.py -q
 ```
 
-Run the broader suite when preparing a release:
+Run the broader alpha suite while hardening seeded demo data and integration isolation:
 
 ```powershell
 python -m pytest -q

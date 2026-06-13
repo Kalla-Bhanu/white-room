@@ -2,6 +2,7 @@
 secrets.local.json
 secrets.enc
 data/
+projects/
 projects/*/artifacts/private/
 __pycache__/
 *.py[cod]
