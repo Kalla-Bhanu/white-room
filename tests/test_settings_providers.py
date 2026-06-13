@@ -44,7 +44,7 @@ def test_settings_codex_key_save_remove_and_render_are_presence_only(monkeypatch
 
         bad_response = client.post(
             "/settings/providers/codex-lb",
-            data={"action": "save", "base_url": "https://kbloadbalancer.198.199.88.10.sslip.io/dashboard", "api_key": secret_value},
+            data={"action": "save", "base_url": "https://gateway.example.com/dashboard", "api_key": secret_value},
             follow_redirects=False,
         )
         assert bad_response.status_code == 303
@@ -278,15 +278,15 @@ def test_settings_groq_test_connection_and_sync_models_use_local_routes(monkeypa
 
 def test_settings_codex_dashboard_url_recovers_to_host_root_on_render(tmp_path) -> None:
     original = _snapshot_codex_state()
-    bad_url = "https://kbloadbalancer.198.199.88.10.sslip.io/dashboard"
+    bad_url = "https://gateway.example.com/dashboard"
     try:
         _set_codex_base_urls(bad_url, bad_url)
         client = TestClient(server.app)
         page = client.get("/settings")
         assert page.status_code == 200
         settings_state = server._codex_lb_settings_state()
-        assert settings_state["base_url"] == "https://kbloadbalancer.198.199.88.10.sslip.io"
-        assert settings_state["models_probe_url"] == "https://kbloadbalancer.198.199.88.10.sslip.io/v1/models"
+        assert settings_state["base_url"] == "https://gateway.example.com"
+        assert settings_state["models_probe_url"] == "https://gateway.example.com/v1/models"
         assert bad_url not in page.text
     finally:
         _restore_codex_state(original)

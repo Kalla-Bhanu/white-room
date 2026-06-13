@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="620" viewBox="0 0 1280 620" role="img" aria-labelledby="title desc">
+  <title id="title">WHITE ROOM routing model</title>
+  <desc id="desc">A diagram showing how a prompt becomes a scoped task packet, is classified by mode, risk, cost, and capability, then routed to local, manual, cloud, or execution lanes.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#090d17"/>
+      <stop offset="1" stop-color="#151b2b"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7e8bad"/>
+    </marker>
+    <style>
+      .title { fill: #f7fbff; font: 700 40px Segoe UI, Arial, sans-serif; }
+      .label { fill: #f7fbff; font: 700 24px Segoe UI, Arial, sans-serif; }
+      .small { fill: #b6c2d9; font: 18px Segoe UI, Arial, sans-serif; }
+      .box { fill: #151f33; stroke: #4d5f8d; stroke-width: 2; rx: 18; }
+      .local { fill: #102b36; stroke: #5de1d7; }
+      .manual { fill: #1a243a; stroke: #82a7ff; }
+      .cloud { fill: #2b1830; stroke: #ff8ec7; }
+      .gate { fill: #302815; stroke: #ffd36b; }
+      .line { stroke: #7e8bad; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1280" height="620" fill="url(#bg)"/>
+  <text x="54" y="70" class="title">Cost-Aware Work Routing</text>
+  <text x="54" y="106" class="small">WHITE ROOM routes work by mode, sensitivity, capability, and price instead of defaulting every turn to the strongest model.</text>
+  <rect x="70" y="190" width="190" height="118" class="box"/>
+  <text x="98" y="236" class="label">Prompt</text>
+  <text x="98" y="268" class="small">chat turn, task,</text>
+  <text x="98" y="294" class="small">or project plan</text>
+  <rect x="322" y="190" width="210" height="118" class="box"/>
+  <text x="350" y="236" class="label">Packetize</text>
+  <text x="350" y="268" class="small">attach only relevant</text>
+  <text x="350" y="294" class="small">memory and task files</text>
+  <rect x="594" y="190" width="230" height="118" class="box"/>
+  <text x="622" y="236" class="label">Classify</text>
+  <text x="622" y="268" class="small">mode, risk, size,</text>
+  <text x="622" y="294" class="small">cost, capability</text>
+  <rect x="886" y="190" width="190" height="118" class="gate" rx="18"/>
+  <text x="914" y="236" class="label">Gate</text>
+  <text x="914" y="268" class="small">approval before</text>
+  <text x="914" y="294" class="small">live/costly calls</text>
+  <path class="line" d="M260 249 H322"/>
+  <path class="line" d="M532 249 H594"/>
+  <path class="line" d="M824 249 H886"/>
+  <rect x="150" y="418" width="210" height="110" class="box local"/>
+  <text x="178" y="462" class="label">Local Lane</text>
+  <text x="178" y="494" class="small">draft, summarize,</text>
+  <text x="178" y="520" class="small">extract, explain</text>
+  <rect x="414" y="418" width="210" height="110" class="box manual"/>
+  <text x="442" y="462" class="label">Manual Lane</text>
+  <text x="442" y="494" class="small">planning/review with</text>
+  <text x="442" y="520" class="small">human copy/paste</text>
+  <rect x="678" y="418" width="210" height="110" class="box cloud"/>
+  <text x="706" y="462" class="label">Cloud Lane</text>
+  <text x="706" y="494" class="small">approved, scoped</text>
+  <text x="706" y="520" class="small">API requests</text>
+  <rect x="942" y="418" width="210" height="110" class="box"/>
+  <text x="970" y="462" class="label">Execution Lane</text>
+  <text x="970" y="494" class="small">implementation packets</text>
+  <text x="970" y="520" class="small">and handoff updates</text>
+  <path class="line" d="M981 308 C981 370 255 370 255 418"/>
+  <path class="line" d="M981 308 C981 370 519 370 519 418"/>
+  <path class="line" d="M981 308 C981 370 783 370 783 418"/>
+  <path class="line" d="M981 308 C981 370 1047 370 1047 418"/>
+  <text x="70" y="582" class="small">Result returns to local memory: message, route decision, usage estimate, packet, handoff, or verification note.</text>
+</svg>

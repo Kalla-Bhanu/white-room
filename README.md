@@ -2,6 +2,8 @@
 
 Local-first AI workbench for building serious projects with lower cost, clearer structure, and stronger privacy.
 
+![WHITE ROOM product tour](docs/assets/white-room-product-tour.gif)
+
 WHITE ROOM is for people who use AI frequently and want to build production-grade work without burning through expensive model limits, losing context across chats, or sending every file to every provider. It turns a project into memory, tasks, routes, approvals, and handoffs, then lets each part of the work use the cheapest capable model.
 
 > Status: alpha skeleton with working provider lanes, local project memory, task packets, model routing, approval gates, and a live cockpit UI. It is designed to be extended locally.
@@ -74,6 +76,18 @@ flowchart LR
 - Approval grants for live provider usage.
 - Bench fixtures for evaluating task-type behavior.
 
+## Proof Of Work
+
+The repo includes a sanitized tour captured from the real local product, not a mock landing page:
+
+- [Product tour](docs/PRODUCT_TOUR.md)
+- [Cockpit screenshot](docs/assets/screenshots/cockpit-chat.png)
+- [Provider settings screenshot](docs/assets/screenshots/provider-settings.png)
+- [Endpoint registry screenshot](docs/assets/screenshots/endpoint-registry.png)
+- [Runner health screenshot](docs/assets/screenshots/runner-health.png)
+
+The screenshots are generated from a clean demo runtime with placeholder provider URLs and no private API keys, emails, account dashboards, or personal project memory.
+
 ## What This Is Not Yet
 
 WHITE ROOM is not a finished hosted SaaS and it is not a promise of unlimited free AI. It is a local-first skeleton for people who want to own and extend their workflow.
@@ -90,6 +104,8 @@ The current alpha still needs:
 See [ROADMAP.md](ROADMAP.md).
 
 ## Architecture
+
+![WHITE ROOM routing model](docs/assets/routing-model.svg)
 
 ```mermaid
 flowchart TB
@@ -162,7 +178,7 @@ The repo includes a publication guide at [docs/PUBLIC_RELEASE.md](docs/PUBLIC_RE
 
 ## Security Posture
 
-WHITE ROOM is local-first by design:
+WHITE ROOM is local-first by design. It is not "security magic"; it is a workbench with explicit boundaries that reduce common AI workflow risks:
 
 - Runtime database stays local.
 - Project memory stays local.
@@ -170,8 +186,10 @@ WHITE ROOM is local-first by design:
 - UI renders key fingerprints, not raw values.
 - Approval gates protect live provider calls.
 - Tests cover redaction and leak prevention.
+- Cloud calls receive scoped packets instead of whole project dumps.
+- Local/model/manual lanes let users avoid cloud calls when the task does not require them.
 
-Read [SECURITY.md](SECURITY.md) before publishing or deploying.
+Read [SECURITY.md](SECURITY.md) and [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md) before publishing or deploying.
 
 ## Repository Map
 

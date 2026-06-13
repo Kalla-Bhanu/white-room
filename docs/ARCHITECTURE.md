@@ -11,6 +11,8 @@ The design goal is to reduce wasted context and provider cost by keeping durable
 
 ## System View
 
+![WHITE ROOM local trust boundary](assets/trust-boundary.svg)
+
 ```mermaid
 flowchart TB
     User["User"] --> UI["Web cockpit"]
@@ -58,6 +60,8 @@ Routing considers:
 - approval grants
 - model catalog
 - local fallback options
+
+![WHITE ROOM routing model](assets/routing-model.svg)
 
 ```mermaid
 flowchart LR

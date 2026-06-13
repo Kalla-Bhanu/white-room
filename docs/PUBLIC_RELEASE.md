@@ -88,12 +88,13 @@ The first public release should say:
 Good proof artifacts:
 
 - screenshot of cockpit with fake/demo project
-- provider settings with fake fingerprints
+- provider settings with missing/fake keys only
+- endpoint registry with placeholder custom gateway URLs
 - route decision panel
 - task packet flow
-- mermaid architecture diagram
+- security/trust-boundary diagram
 - tests passing
-- short demo GIF or video
+- short demo GIF or video captured from sanitized demo state
 
 Bad proof artifacts:
 
@@ -102,3 +103,4 @@ Bad proof artifacts:
 - account limit screenshots
 - real API key fingerprints if tied to your account
 - personal job hunt or interview content
+- local filesystem paths that identify the maintainer or machine
